@@ -11,6 +11,24 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.core.database import Base
 
 
+class Project(Base):
+    __tablename__ = 'project'
+
+    id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), primary_key=True)
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    slug: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    description: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(Text, nullable=False, default='active')
+    is_default: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+
 class DimCompany(Base):
     __tablename__ = 'dim_company'
 
@@ -65,6 +83,58 @@ class DimCountry(Base):
     )
 
 
+class DimChannel(Base):
+    __tablename__ = 'dim_channel'
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    code: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    is_paid: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+
+class DimRegion(Base):
+    __tablename__ = 'dim_region'
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    code: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    region_type: Mapped[str] = mapped_column(Text, nullable=False)
+    parent_region_id: Mapped[int | None] = mapped_column(ForeignKey('dim_region.id'))
+    description: Mapped[str | None] = mapped_column(Text)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+
+class DimCountryRegion(Base):
+    __tablename__ = 'dim_country_region'
+    __table_args__ = (
+        Index('ix_dim_country_region_country_id', 'country_id'),
+        Index('ix_dim_country_region_region_id', 'region_id'),
+    )
+
+    country_id: Mapped[int] = mapped_column(ForeignKey('dim_country.id'), primary_key=True)
+    region_id: Mapped[int] = mapped_column(ForeignKey('dim_region.id'), primary_key=True)
+    relation_type: Mapped[str] = mapped_column(Text, primary_key=True, default='membership')
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
 class DimCalendar(Base):
     __tablename__ = 'dim_calendar'
 
@@ -84,7 +154,7 @@ class IngestionRun(Base):
     __tablename__ = 'ingestion_run'
 
     id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), primary_key=True)
-    project_id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), nullable=False)
+    project_id: Mapped[UUID] = mapped_column(ForeignKey('project.id'), nullable=False)
     file_name: Mapped[str] = mapped_column(Text, nullable=False)
     file_type: Mapped[str] = mapped_column(Text, nullable=False)
     file_extension: Mapped[str | None] = mapped_column(Text)
@@ -151,7 +221,7 @@ class FactTrafficCountriesDaily(Base):
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    project_id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), nullable=False)
+    project_id: Mapped[UUID] = mapped_column(ForeignKey('project.id'), nullable=False)
     ingestion_run_id: Mapped[UUID] = mapped_column(ForeignKey('ingestion_run.id'), nullable=False)
     date: Mapped[date] = mapped_column(ForeignKey('dim_calendar.date'), nullable=False)
     day: Mapped[int | None] = mapped_column(Integer)
@@ -195,7 +265,7 @@ class FactTrafficSourcesDaily(Base):
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    project_id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), nullable=False)
+    project_id: Mapped[UUID] = mapped_column(ForeignKey('project.id'), nullable=False)
     ingestion_run_id: Mapped[UUID] = mapped_column(ForeignKey('ingestion_run.id'), nullable=False)
     date: Mapped[date] = mapped_column(ForeignKey('dim_calendar.date'), nullable=False)
     day: Mapped[int | None] = mapped_column(Integer)
@@ -229,7 +299,7 @@ class FactJourneySourcesDaily(Base):
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    project_id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), nullable=False)
+    project_id: Mapped[UUID] = mapped_column(ForeignKey('project.id'), nullable=False)
     ingestion_run_id: Mapped[UUID] = mapped_column(ForeignKey('ingestion_run.id'), nullable=False)
     date: Mapped[date] = mapped_column(ForeignKey('dim_calendar.date'), nullable=False)
     day: Mapped[int | None] = mapped_column(Integer)
@@ -264,7 +334,7 @@ class FactDeviceTrendsDaily(Base):
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    project_id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), nullable=False)
+    project_id: Mapped[UUID] = mapped_column(ForeignKey('project.id'), nullable=False)
     ingestion_run_id: Mapped[UUID] = mapped_column(ForeignKey('ingestion_run.id'), nullable=False)
     date: Mapped[date] = mapped_column(ForeignKey('dim_calendar.date'), nullable=False)
     day: Mapped[int | None] = mapped_column(Integer)

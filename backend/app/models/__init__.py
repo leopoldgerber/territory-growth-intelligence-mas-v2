@@ -1,26 +1,33 @@
 from app.models.tables import (
     DimCalendar,
+    DimChannel,
     DimCompany,
     DimCountry,
+    DimCountryRegion,
     DimDomain,
+    DimRegion,
     FactDeviceTrendsDaily,
     FactJourneySourcesDaily,
     FactTrafficCountriesDaily,
     FactTrafficSourcesDaily,
     IngestionRun,
     IngestionValidationError,
+    Project,
 )
-
 
 __all__ = [
     'DimCalendar',
+    'DimChannel',
     'DimCompany',
     'DimCountry',
+    'DimCountryRegion',
     'DimDomain',
+    'DimRegion',
     'FactDeviceTrendsDaily',
     'FactJourneySourcesDaily',
     'FactTrafficCountriesDaily',
     'FactTrafficSourcesDaily',
     'IngestionRun',
     'IngestionValidationError',
+    'Project',
 ]

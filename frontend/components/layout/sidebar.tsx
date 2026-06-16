@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BarChart3, FileText, Gauge, Globe2, MonitorCheck, Upload, UsersRound } from 'lucide-react';
+import { BarChart3, FileText, Gauge, MonitorCheck, Upload } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -20,21 +20,9 @@ const navigationItems = [
   },
   {
     title: 'Dashboard',
-    href: '#',
+    href: '/dashboard',
     icon: Gauge,
-    disabled: true,
-  },
-  {
-    title: 'Countries',
-    href: '#',
-    icon: Globe2,
-    disabled: true,
-  },
-  {
-    title: 'Competitors',
-    href: '#',
-    icon: UsersRound,
-    disabled: true,
+    disabled: false,
   },
   {
     title: 'Reports',
