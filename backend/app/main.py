@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes.db import router as db_router
 from app.api.routes.health import router as health_router
+from app.api.routes.ingestion import router as ingestion_router
 from app.api.routes.meta import router as meta_router
 from app.core.config import get_settings
 
@@ -33,6 +34,7 @@ def create_app() -> FastAPI:
     application.include_router(health_router)
     application.include_router(db_router)
     application.include_router(meta_router)
+    application.include_router(ingestion_router)
     return application
 
 

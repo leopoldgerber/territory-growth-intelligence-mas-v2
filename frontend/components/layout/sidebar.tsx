@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BarChart3, FileText, Gauge, Globe2, MonitorCheck, UsersRound } from 'lucide-react';
+import { BarChart3, FileText, Gauge, Globe2, MonitorCheck, Upload, UsersRound } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -10,6 +10,12 @@ const navigationItems = [
     title: 'System Status',
     href: '/system/status',
     icon: MonitorCheck,
+    disabled: false,
+  },
+  {
+    title: 'Data Upload',
+    href: '/data-upload',
+    icon: Upload,
     disabled: false,
   },
   {

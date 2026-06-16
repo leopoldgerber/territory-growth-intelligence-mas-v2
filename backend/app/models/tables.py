@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import BigInteger, Boolean, Date, DateTime, ForeignKey, Index, Integer, Numeric, String, Text, func
@@ -86,15 +87,55 @@ class IngestionRun(Base):
     project_id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), nullable=False)
     file_name: Mapped[str] = mapped_column(Text, nullable=False)
     file_type: Mapped[str] = mapped_column(Text, nullable=False)
+    file_extension: Mapped[str | None] = mapped_column(Text)
+    file_size_bytes: Mapped[int | None] = mapped_column(BigInteger)
     source_kind: Mapped[str] = mapped_column(Text, nullable=False)
+    stored_file_path: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(Text, nullable=False)
+    progress_stage: Mapped[str | None] = mapped_column(Text)
+    progress_percent: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
     period_start: Mapped[date | None] = mapped_column(Date)
     period_end: Mapped[date | None] = mapped_column(Date)
     row_count: Mapped[int | None] = mapped_column(BigInteger)
+    valid_row_count: Mapped[int | None] = mapped_column(BigInteger)
+    invalid_row_count: Mapped[int | None] = mapped_column(BigInteger)
+    inserted_row_count: Mapped[int | None] = mapped_column(BigInteger)
+    skipped_duplicate_count: Mapped[int | None] = mapped_column(BigInteger)
+    failed_row_count: Mapped[int | None] = mapped_column(BigInteger)
     company_count: Mapped[int | None] = mapped_column(Integer)
     domain_count: Mapped[int | None] = mapped_column(Integer)
+    country_count: Mapped[int | None] = mapped_column(Integer)
     checksum: Mapped[str | None] = mapped_column(Text)
     ingestion_status: Mapped[str] = mapped_column(Text, nullable=False)
     validation_status: Mapped[str] = mapped_column(Text, nullable=False)
+    error_message: Mapped[str | None] = mapped_column(Text)
+    worker_name: Mapped[str | None] = mapped_column(Text)
+    queued_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class IngestionValidationError(Base):
+    __tablename__ = 'ingestion_validation_error'
+    __table_args__ = (
+        Index('ix_ingestion_validation_error_ingestion_run_id', 'ingestion_run_id'),
+        Index('ix_ingestion_validation_error_error_code', 'error_code'),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    ingestion_run_id: Mapped[UUID] = mapped_column(ForeignKey('ingestion_run.id'), nullable=False)
+    row_number: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    column_name: Mapped[str] = mapped_column(Text, nullable=False)
+    error_code: Mapped[str] = mapped_column(Text, nullable=False)
+    error_message: Mapped[str] = mapped_column(Text, nullable=False)
+    raw_value: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
@@ -113,6 +154,14 @@ class FactTrafficCountriesDaily(Base):
     project_id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), nullable=False)
     ingestion_run_id: Mapped[UUID] = mapped_column(ForeignKey('ingestion_run.id'), nullable=False)
     date: Mapped[date] = mapped_column(ForeignKey('dim_calendar.date'), nullable=False)
+    day: Mapped[int | None] = mapped_column(Integer)
+    day_of_week: Mapped[str | None] = mapped_column(Text)
+    week_of_year: Mapped[int | None] = mapped_column(Integer)
+    is_weekend: Mapped[bool | None] = mapped_column(Boolean)
+    month: Mapped[str | None] = mapped_column(Text)
+    year: Mapped[int | None] = mapped_column(Integer)
+    month_number: Mapped[int | None] = mapped_column(Integer)
+    month_year: Mapped[date | None] = mapped_column(Date)
     company_id: Mapped[int] = mapped_column(ForeignKey('dim_company.id'), nullable=False)
     domain_id: Mapped[int] = mapped_column(ForeignKey('dim_domain.id'), nullable=False)
     country_id: Mapped[int] = mapped_column(ForeignKey('dim_country.id'), nullable=False)
@@ -149,6 +198,14 @@ class FactTrafficSourcesDaily(Base):
     project_id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), nullable=False)
     ingestion_run_id: Mapped[UUID] = mapped_column(ForeignKey('ingestion_run.id'), nullable=False)
     date: Mapped[date] = mapped_column(ForeignKey('dim_calendar.date'), nullable=False)
+    day: Mapped[int | None] = mapped_column(Integer)
+    day_of_week: Mapped[str | None] = mapped_column(Text)
+    week_of_year: Mapped[int | None] = mapped_column(Integer)
+    is_weekend: Mapped[bool | None] = mapped_column(Boolean)
+    month: Mapped[str | None] = mapped_column(Text)
+    year: Mapped[int | None] = mapped_column(Integer)
+    month_number: Mapped[int | None] = mapped_column(Integer)
+    month_year: Mapped[date | None] = mapped_column(Date)
     company_id: Mapped[int] = mapped_column(ForeignKey('dim_company.id'), nullable=False)
     domain_id: Mapped[int] = mapped_column(ForeignKey('dim_domain.id'), nullable=False)
     direct: Mapped[int | None] = mapped_column(BigInteger)
@@ -175,6 +232,14 @@ class FactJourneySourcesDaily(Base):
     project_id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), nullable=False)
     ingestion_run_id: Mapped[UUID] = mapped_column(ForeignKey('ingestion_run.id'), nullable=False)
     date: Mapped[date] = mapped_column(ForeignKey('dim_calendar.date'), nullable=False)
+    day: Mapped[int | None] = mapped_column(Integer)
+    day_of_week: Mapped[str | None] = mapped_column(Text)
+    week_of_year: Mapped[int | None] = mapped_column(Integer)
+    is_weekend: Mapped[bool | None] = mapped_column(Boolean)
+    month: Mapped[str | None] = mapped_column(Text)
+    year: Mapped[int | None] = mapped_column(Integer)
+    month_number: Mapped[int | None] = mapped_column(Integer)
+    month_year: Mapped[date | None] = mapped_column(Date)
     company_id: Mapped[int] = mapped_column(ForeignKey('dim_company.id'), nullable=False)
     domain_id: Mapped[int] = mapped_column(ForeignKey('dim_domain.id'), nullable=False)
     source_type: Mapped[str] = mapped_column(Text, nullable=False)
@@ -202,6 +267,14 @@ class FactDeviceTrendsDaily(Base):
     project_id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), nullable=False)
     ingestion_run_id: Mapped[UUID] = mapped_column(ForeignKey('ingestion_run.id'), nullable=False)
     date: Mapped[date] = mapped_column(ForeignKey('dim_calendar.date'), nullable=False)
+    day: Mapped[int | None] = mapped_column(Integer)
+    day_of_week: Mapped[str | None] = mapped_column(Text)
+    week_of_year: Mapped[int | None] = mapped_column(Integer)
+    is_weekend: Mapped[bool | None] = mapped_column(Boolean)
+    month: Mapped[str | None] = mapped_column(Text)
+    year: Mapped[int | None] = mapped_column(Integer)
+    month_number: Mapped[int | None] = mapped_column(Integer)
+    month_year: Mapped[date | None] = mapped_column(Date)
     company_id: Mapped[int] = mapped_column(ForeignKey('dim_company.id'), nullable=False)
     domain_id: Mapped[int] = mapped_column(ForeignKey('dim_domain.id'), nullable=False)
     visits_devices: Mapped[int | None] = mapped_column(BigInteger)

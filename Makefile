@@ -1,13 +1,15 @@
 COMPOSE_FILE=infra/docker-compose.postgres.yml
+REDIS_COMPOSE_FILE=infra/docker-compose.redis.yml
 POSTGRES_CONTAINER=tgi_postgres
 COREPACK_HOME?=$(CURDIR)/.corepack
+UV_CACHE_DIR?=$(CURDIR)/.uv-cache
 POSTGRES_DB?=tgi_local
 POSTGRES_USER?=tgi_user
 
 -include .env
 export
 
-.PHONY: db-up db-down db-logs db-restart db-ps db-shell backend-sync backend-run alembic-upgrade alembic-revision frontend-sync frontend-dev frontend-build frontend-lint
+.PHONY: db-up db-down db-logs db-restart db-ps db-shell redis-up redis-down redis-logs backend-sync backend-run worker-run worker-run-watch alembic-upgrade alembic-revision frontend-sync frontend-dev frontend-build frontend-lint
 
 # Database
 db-up:
@@ -28,12 +30,28 @@ db-ps:
 db-shell:
 	docker exec -it $(POSTGRES_CONTAINER) psql -U $${POSTGRES_USER} -d $${POSTGRES_DB}
 
+# Redis
+redis-up:
+	docker compose -f $(REDIS_COMPOSE_FILE) up -d
+
+redis-down:
+	docker compose -f $(REDIS_COMPOSE_FILE) down
+
+redis-logs:
+	docker compose -f $(REDIS_COMPOSE_FILE) logs -f redis
+
 # Backend
 backend-sync:
-	cd backend && uv sync
+	cd backend && UV_CACHE_DIR=$(UV_CACHE_DIR) uv sync
 
 backend-run:
 	cd backend && uv run uvicorn app.main:app --reload
+
+worker-run:
+	cd backend && uv run dramatiq app.ingestion.tasks
+
+worker-run-watch:
+	cd backend && uv run watchmedo auto-restart --directory=./app --pattern=*.py --recursive -- uv run dramatiq app.ingestion.tasks
 
 
 # Alembic

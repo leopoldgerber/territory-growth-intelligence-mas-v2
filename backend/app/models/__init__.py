@@ -8,6 +8,7 @@ from app.models.tables import (
     FactTrafficCountriesDaily,
     FactTrafficSourcesDaily,
     IngestionRun,
+    IngestionValidationError,
 )
 
 
@@ -21,4 +22,5 @@ __all__ = [
     'FactTrafficCountriesDaily',
     'FactTrafficSourcesDaily',
     'IngestionRun',
+    'IngestionValidationError',
 ]

@@ -15,12 +15,18 @@ class Settings(BaseSettings):
     app_env: str = 'local'
     app_version: str = '0.1.0'
     cors_origins: str = 'http://localhost:3000'
+    default_project_id: str = '00000000-0000-0000-0000-000000000001'
     postgres_db: str = 'tgi_local'
     postgres_user: str = 'tgi_user'
     postgres_password: str = 'tgi_password'
     postgres_host: str = 'localhost'
     postgres_port: int = 5432
     database_url: str = 'postgresql+psycopg://tgi_user:tgi_password@localhost:5432/tgi_local'
+    redis_url: str = 'redis://localhost:6379/0'
+    upload_storage_backend: str = 'local'
+    upload_storage_path: str = 'backend/storage/uploads'
+    ingestion_max_file_size_mb: int = 500
+    ingestion_poll_interval_seconds: int = 3
 
 
 @lru_cache

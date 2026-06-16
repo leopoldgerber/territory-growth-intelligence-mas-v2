@@ -1,3 +1,8 @@
+# Local
+/data
+dev-note.md
+backend/storage/uploads/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -15,6 +20,8 @@ downloads/
 eggs/
 .eggs/
 lib/
+!frontend/lib/
+!frontend/lib/**
 lib64/
 parts/
 sdist/
@@ -207,11 +214,13 @@ tempCodeRunnerFile.py
 # Ruff stuff:
 .ruff_cache/
 .corepack/
+.uv-cache/
 
 # Next.js
 frontend/.next/
 frontend/out/
 frontend/node_modules/
+frontend/tsconfig.tsbuildinfo
 
 # PyPI configuration file
 .pypirc
