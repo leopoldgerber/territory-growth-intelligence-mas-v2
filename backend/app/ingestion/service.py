@@ -45,7 +45,7 @@ def accept_upload(
         project_id (UUID): Project identifier.
         file_type (str): Ingestion file type.
         file_name (str): Uploaded file name.
-        file_content (bytes): Uploaded file content."""
+    file_content (bytes): Uploaded file content."""
     file_extension = get_extension(file_name)
     checksum = calculate_checksum(file_content)
     ingestion_run = create_run(

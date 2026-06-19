@@ -11,24 +11,6 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.core.database import Base
 
 
-class Project(Base):
-    __tablename__ = 'project'
-
-    id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), primary_key=True)
-    name: Mapped[str] = mapped_column(Text, nullable=False)
-    slug: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
-    description: Mapped[str | None] = mapped_column(Text)
-    status: Mapped[str] = mapped_column(Text, nullable=False, default='active')
-    is_default: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
-        nullable=False,
-    )
-
-
 class DimCompany(Base):
     __tablename__ = 'dim_company'
 
@@ -154,7 +136,7 @@ class IngestionRun(Base):
     __tablename__ = 'ingestion_run'
 
     id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), primary_key=True)
-    project_id: Mapped[UUID] = mapped_column(ForeignKey('project.id'), nullable=False)
+    project_id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), nullable=False)
     file_name: Mapped[str] = mapped_column(Text, nullable=False)
     file_type: Mapped[str] = mapped_column(Text, nullable=False)
     file_extension: Mapped[str | None] = mapped_column(Text)
@@ -221,7 +203,7 @@ class FactTrafficCountriesDaily(Base):
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    project_id: Mapped[UUID] = mapped_column(ForeignKey('project.id'), nullable=False)
+    project_id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), nullable=False)
     ingestion_run_id: Mapped[UUID] = mapped_column(ForeignKey('ingestion_run.id'), nullable=False)
     date: Mapped[date] = mapped_column(ForeignKey('dim_calendar.date'), nullable=False)
     day: Mapped[int | None] = mapped_column(Integer)
@@ -265,7 +247,7 @@ class FactTrafficSourcesDaily(Base):
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    project_id: Mapped[UUID] = mapped_column(ForeignKey('project.id'), nullable=False)
+    project_id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), nullable=False)
     ingestion_run_id: Mapped[UUID] = mapped_column(ForeignKey('ingestion_run.id'), nullable=False)
     date: Mapped[date] = mapped_column(ForeignKey('dim_calendar.date'), nullable=False)
     day: Mapped[int | None] = mapped_column(Integer)
@@ -299,7 +281,7 @@ class FactJourneySourcesDaily(Base):
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    project_id: Mapped[UUID] = mapped_column(ForeignKey('project.id'), nullable=False)
+    project_id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), nullable=False)
     ingestion_run_id: Mapped[UUID] = mapped_column(ForeignKey('ingestion_run.id'), nullable=False)
     date: Mapped[date] = mapped_column(ForeignKey('dim_calendar.date'), nullable=False)
     day: Mapped[int | None] = mapped_column(Integer)
@@ -334,7 +316,7 @@ class FactDeviceTrendsDaily(Base):
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    project_id: Mapped[UUID] = mapped_column(ForeignKey('project.id'), nullable=False)
+    project_id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), nullable=False)
     ingestion_run_id: Mapped[UUID] = mapped_column(ForeignKey('ingestion_run.id'), nullable=False)
     date: Mapped[date] = mapped_column(ForeignKey('dim_calendar.date'), nullable=False)
     day: Mapped[int | None] = mapped_column(Integer)

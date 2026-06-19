@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.routes.analytics import router as analytics_router
 from app.api.routes.db import router as db_router
 from app.api.routes.health import router as health_router
 from app.api.routes.ingestion import router as ingestion_router
@@ -35,6 +36,7 @@ def create_app() -> FastAPI:
     application.include_router(db_router)
     application.include_router(meta_router)
     application.include_router(ingestion_router)
+    application.include_router(analytics_router)
     return application
 
 

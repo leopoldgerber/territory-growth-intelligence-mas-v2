@@ -12,7 +12,6 @@ from app.models.tables import (
     FactTrafficSourcesDaily,
     IngestionRun,
     IngestionValidationError,
-    Project,
 )
 
 __all__ = [
@@ -29,5 +28,4 @@ __all__ = [
     'FactTrafficSourcesDaily',
     'IngestionRun',
     'IngestionValidationError',
-    'Project',
 ]

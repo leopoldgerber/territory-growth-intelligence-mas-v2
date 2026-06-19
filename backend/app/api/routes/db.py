@@ -7,12 +7,12 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.database import get_session
 
-
 router = APIRouter(prefix='/db', tags=['database'])
+SESSION_DEPENDENCY = Depends(get_session)
 
 
 @router.get('/health')
-def read_db_health(session: Session = Depends(get_session)) -> dict[str, str | float]:
+def read_db_health(session: Session = SESSION_DEPENDENCY) -> dict[str, str | float]:
     """Read database health.
     Args:
         session (Session): Active database session."""
