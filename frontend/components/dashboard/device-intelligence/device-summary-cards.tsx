@@ -1,3 +1,5 @@
+import { InformationPopover } from '@/components/dashboard/information-popover';
+
 import { DeviceComparisonValue, type DeviceComparisonProps } from './device-comparison';
 
 
@@ -49,6 +51,7 @@ export function DeviceSummaryCards({ combinedScopes, companyScope, competitorSco
     },
     {
       label: 'Dominant Device',
+      description: 'Desktop means desktop visits are greater than or equal to mobile visits; Mobile means mobile leads; None means no visits are available.',
       companyValue: company ? format_label(company.dominant_device) : null,
       competitorValue: competitor ? format_label(competitor.dominant_device) : null,
     },
@@ -58,10 +61,17 @@ export function DeviceSummaryCards({ combinedScopes, companyScope, competitorSco
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
       {cards.map((card) => (
         <div className="rounded-md border bg-background p-4" key={card.label}>
-          <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-            {card.deviceClass ? <span className={`h-2 w-2 rounded-sm ${card.deviceClass}`} /> : null}
-            {card.label}
-          </p>
+          <div className="flex min-h-6 items-center justify-between gap-2">
+            <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              {card.deviceClass ? <span className={`h-2 w-2 rounded-sm ${card.deviceClass}`} /> : null}
+              {card.label}
+            </p>
+            {card.description ? (
+              <InformationPopover ariaLabel="About dominant device statuses" title="Dominant Device">
+                {card.description}
+              </InformationPopover>
+            ) : null}
+          </div>
           <DeviceComparisonValue
             className="mt-2 text-xl font-semibold"
             combinedScopes={combinedScopes}

@@ -239,6 +239,89 @@ class DerivedSignal(Base):
     )
 
 
+class OpportunityScore(Base):
+    __tablename__ = 'opportunity_score'
+    __table_args__ = (
+        Index('ix_opportunity_score_project_period', 'project_id', 'date_from', 'date_to'),
+        Index('ix_opportunity_score_project_scope', 'project_id', 'scope'),
+        Index('ix_opportunity_score_project_country', 'project_id', 'country_id'),
+        Index('ix_opportunity_score_project_score', 'project_id', 'opportunity_score'),
+        Index('ix_opportunity_score_project_category', 'project_id', 'score_category'),
+        Index('ix_opportunity_score_project_version', 'project_id', 'calculation_version'),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    project_id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), nullable=False)
+    country_id: Mapped[int] = mapped_column(ForeignKey('dim_country.id'), nullable=False)
+    scope: Mapped[str] = mapped_column(Text, nullable=False)
+    score_key: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    date_from: Mapped[date] = mapped_column(Date, nullable=False)
+    date_to: Mapped[date] = mapped_column(Date, nullable=False)
+    opportunity_score: Mapped[Decimal] = mapped_column(Numeric(10, 4), nullable=False)
+    score_category: Mapped[str] = mapped_column(Text, nullable=False)
+    rank: Mapped[int | None] = mapped_column(Integer)
+    market_size_score: Mapped[Decimal | None] = mapped_column(Numeric(10, 4))
+    growth_score: Mapped[Decimal | None] = mapped_column(Numeric(10, 4))
+    traffic_quality_score: Mapped[Decimal | None] = mapped_column(Numeric(10, 4))
+    competition_level_score: Mapped[Decimal | None] = mapped_column(Numeric(10, 4))
+    concentration_score: Mapped[Decimal | None] = mapped_column(Numeric(10, 4))
+    channel_stability_score: Mapped[Decimal | None] = mapped_column(Numeric(10, 4))
+    entry_risk_score: Mapped[Decimal | None] = mapped_column(Numeric(10, 4))
+    position_potential_score: Mapped[Decimal | None] = mapped_column(Numeric(10, 4))
+    strengths: Mapped[list[str] | None] = mapped_column(JSONB)
+    weaknesses: Mapped[list[str] | None] = mapped_column(JSONB)
+    risks: Mapped[list[str] | None] = mapped_column(JSONB)
+    explanation: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    details: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    calculation_version: Mapped[str] = mapped_column(Text, nullable=False, default='v1')
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+
+class BudgetStrategyReport(Base):
+    __tablename__ = 'budget_strategy_report'
+    __table_args__ = (
+        Index('ix_budget_strategy_project_period', 'project_id', 'date_from', 'date_to'),
+        Index('ix_budget_strategy_project_country', 'project_id', 'country_id'),
+        Index('ix_budget_strategy_project_scope', 'project_id', 'scope'),
+        Index('ix_budget_strategy_project_created', 'project_id', 'created_at'),
+        Index('ix_budget_strategy_project_version', 'project_id', 'calculation_version'),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    project_id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), nullable=False)
+    country_id: Mapped[int] = mapped_column(ForeignKey('dim_country.id'), nullable=False)
+    strategy_key: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    date_from: Mapped[date] = mapped_column(Date, nullable=False)
+    date_to: Mapped[date] = mapped_column(Date, nullable=False)
+    budget_amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(Text, nullable=False)
+    scope: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False, default='generated')
+    opportunity_score: Mapped[Decimal | None] = mapped_column(Numeric(10, 4))
+    opportunity_score_id: Mapped[int | None] = mapped_column(ForeignKey('opportunity_score.id'))
+    recommended_approach: Mapped[str] = mapped_column(Text, nullable=False)
+    allocation: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False)
+    channel_roles: Mapped[dict[str, list[str]]] = mapped_column(JSONB, nullable=False)
+    expected_effect: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    risks: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False)
+    explanation: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    source_snapshot: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    calculation_version: Mapped[str] = mapped_column(Text, nullable=False, default='v1')
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+
 class FactTrafficCountriesDaily(Base):
     __tablename__ = 'fact_traffic_countries_daily'
     __table_args__ = (

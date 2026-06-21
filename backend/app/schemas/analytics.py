@@ -411,3 +411,66 @@ class DerivedSignalSummary(BaseModel):
     total_signals: int
     by_group: dict[str, int]
     by_severity: dict[str, int]
+
+
+class OpportunityScoreFactorBreakdown(BaseModel):
+    factor: str
+    raw_value: Any
+    score: float
+    weight: float
+    weighted_score: float
+    status: str
+    explanation: str
+
+
+class OpportunityScoreItem(BaseModel):
+    country_id: int
+    country: str
+    country_code: str
+    scope: str
+    rank: int | None
+    opportunity_score: float
+    score_category: str
+    factor_scores: dict[str, float]
+    strengths: list[str]
+    weaknesses: list[str]
+    risks: list[str]
+    explanation: dict[str, Any]
+    details: dict[str, Any] | None
+    calculation_version: str
+
+
+class OpportunityScoresResponse(BaseModel):
+    items: list[OpportunityScoreItem]
+    note: str | None
+
+
+class OpportunityScoreSummary(BaseModel):
+    total_countries: int
+    average_score: float
+    top_country: str | None
+    top_score: float
+    by_category: dict[str, int]
+
+
+class OpportunityScoreRecalculateRequest(BaseModel):
+    date_from: date
+    date_to: date
+    country: str = 'all'
+    tld: str = 'all'
+    company: str = 'all'
+    company_domain: str = 'all'
+    competitors: str = 'all'
+    competitor_domain: str = 'all'
+    calculation_version: str = 'v1'
+
+
+class OpportunityScoreRecalculateResponse(BaseModel):
+    status: str
+    calculation_version: str
+    date_from: date
+    date_to: date
+    scores_created: int
+    scores_updated: int
+    scopes: list[str]
+    note: str | None

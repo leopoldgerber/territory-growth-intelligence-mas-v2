@@ -7,6 +7,7 @@ from app.analytics.channel_intelligence import get_channel_intelligence
 from app.analytics.competitor_intelligence import get_competitor_intelligence
 from app.analytics.country_intelligence import fetch_filter_options, get_country_intelligence
 from app.analytics.device_intelligence import get_device_intelligence
+from app.analytics.scoring.service import list_scores, recalculate_scores, summarize_scores
 from app.analytics.signals.service import get_signal_summary, list_derived_signals, recalculate_signals
 from app.core.config import get_settings
 from app.core.database import get_session
@@ -18,6 +19,10 @@ from app.schemas.analytics import (
     DerivedSignalResponse,
     DerivedSignalSummary,
     DeviceIntelligenceResponse,
+    OpportunityScoreRecalculateRequest,
+    OpportunityScoreRecalculateResponse,
+    OpportunityScoresResponse,
+    OpportunityScoreSummary,
     RecalculateSignalsRequest,
     RecalculateSignalsResponse,
 )
@@ -39,7 +44,87 @@ SIGNAL_TYPE_QUERY = Query(default='all', alias='signalType')
 ENTITY_TYPE_QUERY = Query(default='all', alias='entityType')
 SEVERITY_QUERY = Query(default='all')
 SCOPE_QUERY = Query(default='all')
+SCORE_CATEGORY_QUERY = Query(default='all', alias='scoreCategory')
 DOMAIN_QUERY = Query(default='all')
+
+
+@router.post('/scoring/recalculate', response_model=OpportunityScoreRecalculateResponse)
+def recalculate_opportunity_scores(
+    request: OpportunityScoreRecalculateRequest,
+    session: Session = SESSION_DEPENDENCY,
+) -> OpportunityScoreRecalculateResponse:
+    """Recalculate opportunity scores.
+    Args:
+        request (OpportunityScoreRecalculateRequest): Opportunity scoring request.
+        session (Session): Active database session."""
+    settings = get_settings()
+    try:
+        return recalculate_scores(session, settings.default_project_id, request)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@router.get('/scoring/opportunities', response_model=OpportunityScoresResponse)
+def read_opportunity_scores(
+    session: Session = SESSION_DEPENDENCY,
+    date_from: date | None = DATE_FROM_QUERY,
+    date_to: date | None = DATE_TO_QUERY,
+    country: str = COUNTRY_QUERY,
+    scope: str = SCOPE_QUERY,
+    score_category: str = SCORE_CATEGORY_QUERY,
+    limit: int = LIMIT_QUERY,
+) -> OpportunityScoresResponse:
+    """Read persisted opportunity scores.
+    Args:
+        session (Session): Active database session.
+        date_from (date | None): Requested start date.
+        date_to (date | None): Requested end date.
+        country (str): Requested country values.
+        scope (str): Requested analytical scopes.
+        score_category (str): Requested score categories.
+        limit (int): Requested result limit."""
+    settings = get_settings()
+    return list_scores(
+        session,
+        settings.default_project_id,
+        date_from,
+        date_to,
+        country,
+        scope,
+        score_category,
+        limit,
+    )
+
+
+@router.get('/scoring/summary', response_model=OpportunityScoreSummary)
+def read_opportunity_summary(
+    session: Session = SESSION_DEPENDENCY,
+    date_from: date | None = DATE_FROM_QUERY,
+    date_to: date | None = DATE_TO_QUERY,
+    country: str = COUNTRY_QUERY,
+    scope: str = SCOPE_QUERY,
+    score_category: str = SCORE_CATEGORY_QUERY,
+) -> OpportunityScoreSummary:
+    """Read opportunity scoring summary.
+    Args:
+        session (Session): Active database session.
+        date_from (date | None): Requested start date.
+        date_to (date | None): Requested end date.
+        country (str): Requested country values.
+        scope (str): Requested analytical scopes.
+        score_category (str): Requested score categories."""
+    settings = get_settings()
+    response = list_scores(
+        session,
+        settings.default_project_id,
+        date_from,
+        date_to,
+        country,
+        scope,
+        score_category,
+        100,
+    )
+    return summarize_scores(response.items)
 
 
 @router.post('/signals/recalculate', response_model=RecalculateSignalsResponse)

@@ -86,7 +86,10 @@ export function CompetitorMarketAnalysis({ data, useAccent }: MarketAnalysisProp
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-semibold text-foreground">Country Dependency</h3>
             <InformationPopover ariaLabel="About country dependency" title="Country Dependency">
-              Measures traffic concentration in the leading country and top three countries. Higher concentration means greater dependency on fewer markets.
+              <p>Measures traffic concentration in the leading country and top three countries.</p>
+              <p><strong>low:</strong> top 1 is below 30% and top 3 are below 60%.</p>
+              <p><strong>medium:</strong> top 1 is at least 30% or top 3 are at least 60%.</p>
+              <p><strong>high:</strong> top 1 is at least 50% or top 3 are at least 80%.</p>
             </InformationPopover>
           </div>
           <Badge variant={analysisVariant(data.dependency.dependency_level)}>
@@ -113,7 +116,10 @@ export function CompetitorMarketAnalysis({ data, useAccent }: MarketAnalysisProp
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-semibold text-foreground">Presence Stability</h3>
             <InformationPopover ariaLabel="About presence stability" title="Presence Stability">
-              Shows the share of days with positive traffic in the selected period: stable from 80%, irregular from 40%, and weak below 40%.
+              <p>Shows the share of days with positive traffic in the selected period.</p>
+              <p><strong>stable:</strong> active on at least 80% of days.</p>
+              <p><strong>irregular:</strong> active on 40% to 79.9% of days.</p>
+              <p><strong>weak:</strong> active on fewer than 40% of days.</p>
             </InformationPopover>
           </div>
           <Badge variant={analysisVariant(data.presence_stability.status)}>{data.presence_stability.status}</Badge>
@@ -143,7 +149,10 @@ export function CompetitorMarketAnalysis({ data, useAccent }: MarketAnalysisProp
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-foreground">Market Windows</h3>
           <InformationPopover ariaLabel="About market windows" title="Market Windows">
-            Rule-based opportunities and risks detected from declining presence, small but rapidly growing markets, low stability, or high country dependency.
+            <p><strong>declining_presence:</strong> country traffic declined by at least 10%.</p>
+            <p><strong>small_but_growing:</strong> country share is below 5% while growth is at least 20%.</p>
+            <p><strong>low_stability:</strong> traffic is active on fewer than 40% of period days.</p>
+            <p><strong>high_dependency:</strong> traffic is highly concentrated in the leading markets.</p>
           </InformationPopover>
         </div>
         {data.market_windows.length === 0 ? (

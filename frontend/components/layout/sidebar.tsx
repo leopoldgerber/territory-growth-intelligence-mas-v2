@@ -26,9 +26,9 @@ const navigationItems = [
   },
   {
     title: 'Reports',
-    href: '#',
+    href: '/reports/budget-strategy',
     icon: FileText,
-    disabled: true,
+    disabled: false,
   },
 ];
 

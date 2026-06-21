@@ -80,7 +80,16 @@ export function ChannelDependencyTable({
               <th className="px-3 py-2 text-right font-medium">Paid</th>
               <th className="px-3 py-2 text-right font-medium">Referral</th>
               <th className="px-3 py-2 text-right font-medium">Social</th>
-              <th className="px-3 py-2 text-right font-medium">Dependency</th>
+              <th className="px-3 py-2 text-right font-medium">
+                <span className="flex items-center justify-end gap-1">
+                  Dependency
+                  <InformationPopover ariaLabel="About dependency levels" title="Dependency">
+                    <p><strong>low:</strong> dominant channel share is below 40%.</p>
+                    <p><strong>medium:</strong> dominant channel share is from 40% to 59.9%.</p>
+                    <p><strong>high:</strong> dominant channel share is at least 60%.</p>
+                  </InformationPopover>
+                </span>
+              </th>
             </tr>
           </thead>
           <tbody>

@@ -171,7 +171,12 @@ export function ChannelSkewsCard({ combinedScopes, companyScope, competitorScope
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold text-foreground">Channel Skews</h3>
         <InformationPopover ariaLabel="About channel skews" title="Channel Skews">
-          Rule-based observations where one acquisition channel is unusually dominant or the channel mix is balanced.
+          <p><strong>brand_dependency:</strong> direct traffic is at least 60%.</p>
+          <p><strong>seo_dependency:</strong> search traffic is at least 60%.</p>
+          <p><strong>paid_dependency:</strong> paid traffic is at least 35%.</p>
+          <p><strong>referral_dependency:</strong> referral traffic is at least 30%.</p>
+          <p><strong>social_dependency:</strong> social traffic is at least 25%.</p>
+          <p><strong>balanced_mix:</strong> no channel reaches a 40% share.</p>
         </InformationPopover>
       </div>
       <div className="mt-3 grid gap-3">
@@ -203,7 +208,12 @@ export function OpportunitySignalsCard({ combinedScopes, companyScope, competito
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold text-foreground">Opportunity Signals</h3>
         <InformationPopover ariaLabel="About opportunity signals" title="Opportunity Signals">
-          Neutral rule-based observations about the selected channel mix. They are analytical signals, not recommendations.
+          <p><strong>high_search_share:</strong> search represents at least 40%.</p>
+          <p><strong>meaningful_paid_share:</strong> paid represents at least 20%.</p>
+          <p><strong>visible_referral_share:</strong> referral represents at least 15%.</p>
+          <p><strong>visible_social_share:</strong> social represents at least 15%.</p>
+          <p><strong>high_direct_share:</strong> direct represents at least 50%.</p>
+          <p><strong>low_*_share:</strong> the named channel represents 3% or less.</p>
         </InformationPopover>
       </div>
       <div className="mt-3 grid gap-3">

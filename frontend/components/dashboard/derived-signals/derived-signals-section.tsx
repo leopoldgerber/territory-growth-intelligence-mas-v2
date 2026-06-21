@@ -115,7 +115,19 @@ export function DerivedSignalsSection() {
 
         <div className="grid gap-3 sm:grid-cols-2 lg:max-w-2xl">
           <label className="grid gap-1.5 text-xs font-medium text-muted-foreground">
-            <span>Signal group</span>
+            <span className="flex items-center gap-1">
+              Signal group
+              <InformationPopover ariaLabel="About signal groups" title="Signal group">
+                <p><strong>all:</strong> every signal group.</p>
+                <p><strong>growth:</strong> traffic growth, decline, or new activity.</p>
+                <p><strong>volatility:</strong> stable or unusually variable daily traffic.</p>
+                <p><strong>competition:</strong> concentration, fragmentation, and competitor expansion.</p>
+                <p><strong>territory:</strong> new, inactive, or low-noise markets.</p>
+                <p><strong>channel:</strong> material acquisition-channel share changes.</p>
+                <p><strong>quality:</strong> weaker bounce-rate or visit-duration performance.</p>
+                <p><strong>device:</strong> desktop and mobile traffic-quality differences.</p>
+              </InformationPopover>
+            </span>
             <select
               className="h-9 rounded-md border border-input bg-background px-3 text-sm font-normal text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/40"
               onChange={(event) => update_filter('signalGroup', event.target.value)}
@@ -125,7 +137,16 @@ export function DerivedSignalsSection() {
             </select>
           </label>
           <label className="grid gap-1.5 text-xs font-medium text-muted-foreground">
-            <span>Severity</span>
+            <span className="flex items-center gap-1">
+              Severity
+              <InformationPopover ariaLabel="About signal severity levels" title="Severity">
+                <p><strong>all:</strong> every severity level.</p>
+                <p><strong>low:</strong> informative or early-stage condition.</p>
+                <p><strong>medium:</strong> material condition worth monitoring.</p>
+                <p><strong>high:</strong> strong deviation or elevated analytical risk.</p>
+                <p><strong>critical:</strong> highest-priority condition when supported by a rule.</p>
+              </InformationPopover>
+            </span>
             <select
               className="h-9 rounded-md border border-input bg-background px-3 text-sm font-normal text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/40"
               onChange={(event) => update_filter('severity', event.target.value)}

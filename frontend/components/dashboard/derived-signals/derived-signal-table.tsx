@@ -39,9 +39,9 @@ function format_metric(signal: DerivedSignal): string {
 }
 
 const headerDescriptions: Record<string, string> = {
-  Severity: 'Estimated importance of the detected condition: low, medium, high, or critical.',
-  Group: 'Analytical family that produced the signal, such as growth, competition, channel, quality, or device.',
-  Type: 'Specific rule or condition detected by the signal calculation.',
+  Severity: 'Low is informative, medium is material, high is a strong deviation, and critical is the highest-priority rule result.',
+  Group: 'Growth covers traffic movement; volatility covers stability; competition covers market structure; territory covers market presence; channel covers acquisition shifts; quality covers engagement; device covers desktop and mobile differences.',
+  Type: 'Specific triggered rule, including growth acceleration, traffic decline, new activity, volatility, concentration, expansion, channel shift, quality degradation, or device-quality conditions.',
   Entity: 'Country, company, domain, channel, device, or selected analytical scope associated with the signal.',
   Period: 'Start and end dates used to calculate the signal and its comparison baseline.',
   'Value / Delta': 'Primary signal measurement. Delta percent is preferred, followed by absolute delta and current value.',

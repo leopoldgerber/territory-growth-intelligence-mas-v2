@@ -1,6 +1,6 @@
 'use client';
 
-import { Activity, Flag, MonitorSmartphone, Radio, Users, type LucideIcon } from 'lucide-react';
+import { Activity, Flag, Gauge, MonitorSmartphone, Radio, Users, type LucideIcon } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { KeyboardEvent } from 'react';
 
@@ -9,9 +9,10 @@ import { CountryIntelligenceSection } from '@/components/dashboard/country-intel
 import { ChannelIntelligenceSection } from '@/components/dashboard/channel-intelligence/channel-intelligence-section';
 import { DeviceIntelligenceSection } from '@/components/dashboard/device-intelligence/device-intelligence-section';
 import { DerivedSignalsSection } from '@/components/dashboard/derived-signals/derived-signals-section';
+import { OpportunityScoringSection } from '@/components/dashboard/opportunity-scoring/opportunity-scoring-section';
 import { cn } from '@/lib/utils';
 
-type IntelligenceTab = 'country' | 'competitor' | 'channel' | 'device' | 'signals';
+type IntelligenceTab = 'country' | 'competitor' | 'channel' | 'device' | 'signals' | 'scoring';
 
 const intelligenceTabs: {
   id: IntelligenceTab;
@@ -43,10 +44,15 @@ const intelligenceTabs: {
     icon: Activity,
     label: 'Signals',
   },
+  {
+    id: 'scoring',
+    icon: Gauge,
+    label: 'Scoring',
+  },
 ];
 
 function read_active_tab(value: string | null): IntelligenceTab {
-  if (value === 'competitor' || value === 'channel' || value === 'device' || value === 'signals') {
+  if (value === 'competitor' || value === 'channel' || value === 'device' || value === 'signals' || value === 'scoring') {
     return value;
   }
   return 'country';
@@ -127,6 +133,7 @@ export function DashboardIntelligenceTabs() {
         {activeTab === 'channel' ? <ChannelIntelligenceSection /> : null}
         {activeTab === 'device' ? <DeviceIntelligenceSection /> : null}
         {activeTab === 'signals' ? <DerivedSignalsSection /> : null}
+        {activeTab === 'scoring' ? <OpportunityScoringSection /> : null}
       </div>
     </div>
   );

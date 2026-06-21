@@ -9,9 +9,12 @@ import {
   getCompetitorIntelligence,
   getCountryIntelligence,
   getDeviceIntelligence,
+  getOpportunityScores,
+  getOpportunityScoringSummary,
   getDerivedSignals,
   getDerivedSignalsSummary,
   recalculateDerivedSignals,
+  recalculateOpportunityScores,
 } from '@/lib/api/analytics';
 import { readDashboardFilters } from '@/lib/dashboard/query-params';
 
@@ -257,6 +260,90 @@ export function useRecalculateDerivedSignalsMutation() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['derived-signals'] }),
         queryClient.invalidateQueries({ queryKey: ['derived-signals-summary'] }),
+      ]);
+    },
+  });
+}
+
+export function useOpportunityScoresQuery(scope: 'overall' | 'company' | 'competitor', enabled = true) {
+  const searchParams = useSearchParams();
+  const filters = readDashboardFilters(new URLSearchParams(searchParams.toString()));
+
+  return useQuery({
+    enabled,
+    queryKey: [
+      'opportunity-scores',
+      filters.dateFrom,
+      filters.dateTo,
+      filters.country,
+      filters.tld,
+      filters.company,
+      filters.companyDomain,
+      filters.competitors,
+      filters.competitorDomain,
+      scope,
+    ],
+    queryFn: () =>
+      getOpportunityScores({
+        dateFrom: filters.dateFrom,
+        dateTo: filters.dateTo,
+        country: filters.country,
+        scope,
+        limit: 100,
+      }),
+  });
+}
+
+export function useOpportunityScoringSummaryQuery(scope: 'overall' | 'company' | 'competitor', enabled = true) {
+  const searchParams = useSearchParams();
+  const filters = readDashboardFilters(new URLSearchParams(searchParams.toString()));
+
+  return useQuery({
+    enabled,
+    queryKey: [
+      'opportunity-scoring-summary',
+      filters.dateFrom,
+      filters.dateTo,
+      filters.country,
+      filters.tld,
+      filters.company,
+      filters.companyDomain,
+      filters.competitors,
+      filters.competitorDomain,
+      scope,
+    ],
+    queryFn: () =>
+      getOpportunityScoringSummary({
+        dateFrom: filters.dateFrom,
+        dateTo: filters.dateTo,
+        country: filters.country,
+        scope,
+      }),
+  });
+}
+
+export function useRecalculateOpportunityScoresMutation() {
+  const searchParams = useSearchParams();
+  const filters = readDashboardFilters(new URLSearchParams(searchParams.toString()));
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () =>
+      recalculateOpportunityScores({
+        date_from: filters.dateFrom,
+        date_to: filters.dateTo,
+        country: filters.country,
+        tld: filters.tld,
+        company: filters.company,
+        company_domain: filters.companyDomain,
+        competitors: filters.competitors,
+        competitor_domain: filters.competitorDomain,
+        calculation_version: 'v1',
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['opportunity-scores'] }),
+        queryClient.invalidateQueries({ queryKey: ['opportunity-scoring-summary'] }),
       ]);
     },
   });

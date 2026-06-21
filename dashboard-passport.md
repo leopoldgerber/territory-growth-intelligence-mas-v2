@@ -1,76 +1,139 @@
 # Паспорт страницы Dashboard
 
-## 1. Назначение
+## 1. Общая информация
 
-`Dashboard` — рабочая страница ручной аналитики и исследования рынков. Она не формирует MAS-рекомендации и отчёты, а показывает рассчитанные показатели по загруженным данным.
+**Страница:** `Dashboard`
 
-Текущий маршрут:
+**Маршрут:** `/dashboard`
+
+**Назначение:** ручное исследование рыночного присутствия компаний и конкурентов по странам, каналам, устройствам и производным аналитическим сигналам.
+
+**Состояние документа:** актуально на 2026-06-21.
+
+**Текущая Alembic revision:** `202606210006`.
+
+Dashboard является аналитическим рабочим пространством. Он показывает вычисляемые показатели и объяснимые rule-based сигналы, но не создаёт итоговые рекомендации, автоматические стратегии или MAS-решения.
+
+Проект в интерфейсе не выбирается. Backend использует внутренний `DEFAULT_PROJECT_ID` как технический scope данных.
+
+## 2. Состав страницы
+
+Страница содержит:
+
+1. Заголовок `Market exploration dashboard`.
+2. Единую панель общих фильтров.
+3. Внутреннюю панель из шести аналитических вкладок:
+   - `Market Overview`;
+   - `Countries`;
+   - `Channels`;
+   - `Devices`;
+   - `Signals`.
+   - `Scoring`.
+
+Общие фильтры сохраняются при переключении вкладок. Активная вкладка хранится в URL-параметре `intelligence`.
+
+## 3. Технологический стек
+
+### Frontend
+
+- Next.js 15;
+- React 19;
+- TypeScript 5;
+- TanStack Query 5;
+- Tailwind CSS 3;
+- Lucide React;
+- Next Themes;
+- локальные UI-компоненты проекта.
+
+Основные файлы:
 
 ```text
-/dashboard
+frontend/app/dashboard/page.tsx
+frontend/components/dashboard/dashboard-filters.tsx
+frontend/components/dashboard/dashboard-intelligence-tabs.tsx
+frontend/lib/dashboard/query-params.ts
+frontend/lib/api/analytics.ts
+frontend/lib/api/analytics-queries.ts
+frontend/lib/types/analytics.ts
 ```
 
-Основной источник данных:
+### Backend
+
+- Python 3.11+;
+- FastAPI;
+- SQLAlchemy 2;
+- Pydantic;
+- PostgreSQL;
+- Alembic.
+
+Основные файлы:
+
+```text
+backend/app/api/routes/analytics.py
+backend/app/schemas/analytics.py
+backend/app/analytics/country_intelligence.py
+backend/app/analytics/competitor_intelligence.py
+backend/app/analytics/channel_intelligence.py
+backend/app/analytics/device_intelligence.py
+backend/app/analytics/signals/
+```
+
+## 4. Источники данных
+
+### Market Overview и Countries
 
 ```text
 fact_traffic_countries_daily
 ```
 
-Гранулярность источника:
+Основная гранулярность:
 
 ```text
-date + company + domain + country
+date + project_id + company_id + domain_id + country_id
 ```
 
-## 2. Текущее содержимое страницы
-
-Страница состоит из следующих блоков:
-
-1. Заголовок `Market exploration dashboard`.
-2. Общая панель фильтров.
-3. `Market Overview` — placeholder, аналитика ещё не реализована.
-4. Внутренняя tab-панель аналитики:
-   - `Country Intelligence` — первая вкладка;
-   - `Competitor Intelligence` — вторая вкладка.
-6. `Channel Intelligence` — future placeholder.
-7. `Device Intelligence` — future placeholder.
-
-Обе вкладки находятся внутри Dashboard и используют одну общую панель фильтров. Отдельная top-level страница для конкурентов не используется.
-
-## 3. Технологическое устройство
-
-### Frontend
-
-- Next.js 15, React 19, TypeScript.
-- TanStack Query для загрузки аналитики.
-- Tailwind CSS и локальные UI-компоненты.
-- Состояние фильтров хранится в URL query params.
-- API client: `frontend/lib/api/analytics.ts`.
-- Query hooks: `frontend/lib/api/analytics-queries.ts`.
-- Типы ответов: `frontend/lib/types/analytics.ts`.
-- Страница: `frontend/app/dashboard/page.tsx`.
-
-### Backend
-
-- FastAPI.
-- SQLAlchemy ORM и SQL-агрегации.
-- PostgreSQL.
-- Analytics routes: `backend/app/api/routes/analytics.py`.
-- Pydantic schemas: `backend/app/schemas/analytics.py`.
-- Country service: `backend/app/analytics/country_intelligence.py`.
-- Competitor service: `backend/app/analytics/competitor_intelligence.py`.
-
-### Database
-
-Для аналитики используются составные индексы по `project_id`, дате, стране, компании и домену. Актуальная локальная Alembic revision:
+### Channels
 
 ```text
-202606190001
+fact_traffic_sources_daily
+fact_journey_sources_daily
 ```
 
-Материализованные представления и фоновые пересчёты для Dashboard не используются.
+`fact_traffic_sources_daily` содержит агрегаты direct, search, paid, referral и social.
 
-## 4. Фильтры Dashboard
+`fact_journey_sources_daily` содержит source type, traffic type, search source и traffic.
+
+### Devices
+
+```text
+fact_device_trends_daily
+```
+
+Таблица содержит desktop/mobile visits, unique users, bounce/no-bounce и duration.
+
+### Signals
+
+```text
+derived_signal
+```
+
+Сигналы сохраняются в БД после явного пересчёта. Поле `scope` принимает значения:
+
+```text
+overall
+company
+competitor
+```
+
+### Scoring
+
+```text
+opportunity_score
+```
+
+Содержит сохранённый country-level ranking, восемь факторных scores, category, strengths, weaknesses, risks и explainable breakdown.
+
+## 5. Общие фильтры
 
 ### URL-параметры
 
@@ -100,115 +163,128 @@ competitorDomain=all
 intelligence=country
 ```
 
-`intelligence` хранит активную внутреннюю вкладку (`country` или `competitor`) и не является аналитическим фильтром.
-
 ### Множественный выбор
 
-Несколько значений записываются в один URL-параметр через запятую:
+Несколько значений сохраняются через запятую:
 
 ```text
 country=USA,DEU,FRA
-company=1,2
-competitors=3,4
+company=10,12
+competitors=1,2
 ```
 
-### Семантика специальных значений
+### Специальные значения
 
-- `all` — использовать все доступные значения и не добавлять ограничение по этому измерению.
-- `none` — область не выбрана. Поддерживается для `company` и `competitors`.
-- Одна или несколько записей — ограничить расчёт перечисленными значениями.
+- `all` — не ограничивать соответствующий scope.
+- `none` — не выбирать scope. Поддерживается для Company и Competitors.
+- одно значение — применить точный фильтр;
+- несколько значений — применить фильтр по перечисленному набору.
 
-### Взаимозависимость фильтров
+Если Company и Competitors равны `None`, сравнительные показатели не отображаются.
 
-Опции фильтров рассчитываются endpoint `GET /analytics/filter-options` по данным за выбранный период.
+### Фильтр TLD
 
-- Выбор стран ограничивает доступные компании, домены и TLD значениями, у которых есть данные в этих странах.
-- Выбор компании и/или её домена ограничивает список стран странами присутствия этой области.
-- Выбор конкурентов и/или их доменов аналогично ограничивает список стран.
-- Если одновременно выбраны компания и конкуренты, страны формируются по пересечению доступности обеих активных областей.
-- `Company Domain` зависит от выбранной компании и TLD.
-- `Competitors Domain` зависит от выбранных конкурентов и TLD.
-- Недоступные после изменения соседнего фильтра значения автоматически удаляются из выбора.
-- Выпадающие списки закрываются кликом вне фильтра или клавишей `Escape`.
+Фильтр ограничивает домены по домену верхнего уровня, например:
 
-## 5. Analytics API
+```text
+com
+ru
+de
+eu
+```
 
-### Filter options
+При изменении TLD списки Company Domain и Competitor Domain пересчитываются.
+
+### Связь company и domain
+
+- Company Domain показывает только домены выбранных Company.
+- Competitor Domain показывает только домены выбранных Competitors.
+- При `Company = All` доступны домены всех компаний.
+- При `Competitors = All` доступны домены всех конкурентов.
+- Недоступные после изменения родительского фильтра значения удаляются из выбора.
+
+### Связь стран с компаниями и конкурентами
+
+Доступные страны формируются по объединению присутствия обеих сторон:
+
+```text
+Countries(company scope) UNION Countries(competitor scope)
+```
+
+Следствия:
+
+- страна доступна, если данные есть хотя бы у Company или хотя бы у Competitors;
+- общая страна не обязана присутствовать у обеих сторон;
+- если в выбранной стране у одной стороны нет данных, её показатели равны `0`;
+- выбор страны ограничивает доступные компании и домены данными, присутствующими в этой стране;
+- выбор компаний или доменов ограничивает список стран их фактическим присутствием.
+
+Опции загружаются через:
 
 ```text
 GET /analytics/filter-options
 ```
 
-Возвращает:
+### Поведение элементов фильтра
 
-- страны;
-- TLD;
-- компании;
-- домены с привязкой к компании и TLD.
+- даты сохраняются в URL в формате `YYYY-MM-DD`;
+- выпадающие списки закрываются повторным нажатием, кликом вне компонента или `Escape`;
+- кнопка очистки возвращает общие фильтры к значениям по умолчанию;
+- фильтры автоматически запускают повторные GET-запросы TanStack Query;
+- пересчёт Signals является отдельной POST-операцией.
 
-### Country Intelligence
+## 6. Общая логика scopes
+
+Сравнительные вкладки используют два независимых scope:
+
+```text
+company + companyDomain
+competitors + competitorDomain
+```
+
+Общие ограничения для обоих scope:
+
+```text
+project_id
+dateFrom/dateTo
+country
+tld
+```
+
+### Режим All/All
+
+Если Company, Company Domain, Competitors и Competitor Domain одновременно равны `all`, backend возвращает один `overall_scope`. Интерфейс показывает одно нейтральное значение без искусственного дублирования Company/Competitors.
+
+### Раздельный режим
+
+При любом явном выборе используются отдельные `company_scope` и `competitor_scope`.
+
+- Company отображается зелёным: `emerald-500`.
+- Competitors отображаются синим: `sky-500`.
+- Два значения выводятся через `|`.
+- Scope со значением `None` не отображается.
+- Выбранный scope без данных отображает нулевые показатели.
+
+Пример:
+
+```text
+125 000 | 98 000
+company   competitors
+```
+
+## 7. Вкладка Market Overview
+
+### Назначение
+
+Общий сравнительный обзор трафика Company и Competitors в выбранных странах и периоде.
+
+### API
 
 ```text
 GET /analytics/country-intelligence
 ```
 
-Использует общий фильтр страны, TLD и периода, а также две отдельные области:
-
-- `company + companyDomain`;
-- `competitors + competitorDomain`.
-
-### Competitor Intelligence
-
-```text
-GET /analytics/competitor-intelligence
-```
-
-Использует:
-
-- период;
-- множественный фильтр стран;
-- TLD;
-- `competitors`;
-- `competitorDomain`;
-- `limit`.
-
-Фильтр основной компании на расчёт Competitor Intelligence не влияет.
-
-## 6. Country Intelligence — актуальное техническое состояние
-
-### Backend
-
-Реализованы отдельные SQL-агрегации для области компании и области конкурентов:
-
-- summary;
-- daily traffic trend;
-- desktop/mobile split;
-- bounce/no-bounce;
-- engagement;
-- market signal;
-- top competitors;
-- количество выбранных стран.
-
-Ответ содержит параллельные структуры:
-
-```text
-summary / competitor_summary
-traffic_trend / competitor_traffic_trend
-device_split / competitor_device_split
-bounce / competitor_bounce
-engagement / competitor_engagement
-market_signal / competitor_market_signal
-```
-
-### Frontend
-
-Компонент:
-
-```text
-frontend/components/dashboard/country-intelligence/country-intelligence-section.tsx
-```
-
-Отображаются:
+### Основные блоки
 
 - Total Traffic;
 - Active Companies;
@@ -222,58 +298,24 @@ frontend/components/dashboard/country-intelligence/country-intelligence-section.
 - Engagement;
 - Market Signal.
 
-Цветовая логика:
-
-- компания — зелёный;
-- конкуренты — синий;
-- компания и конкуренты одновременно — два значения через `|`;
-- отсутствующая область `None` не отображается;
-- выбранная область без данных отображает `0`;
-- при одинаковых `Company = All` и `Competitors = All` с одинаковыми domain-фильтрами показывается одно нейтральное значение.
-
-Для Market Signal есть кнопка с вопросительным знаком. Она открывает окно с описанием всех типов сигнала и закрывается повторным нажатием, кликом снаружи или `Escape`.
-
-### Состояния интерфейса
-
-- Loading — skeleton.
-- API error — destructive alert.
-- Нет ответа — empty state.
-- `Company = None` и `Competitors = None` — сообщение о необходимости выбрать область.
-- Выбранная область без данных не скрывает карточки: показатели выводятся как нулевые.
-
-## 7. Country Intelligence — логика расчётов
-
-### Общий scope
-
-Обе области используют одинаковые ограничения:
-
-```text
-project_id
-dateFrom/dateTo
-country
-tld
-```
-
-Затем применяются собственные company/domain-фильтры.
-
 ### Summary
 
-- `total_traffic` — сумма `traffic`.
-- `active_companies` — число уникальных `company_id` со значением `traffic > 0`.
-- `active_domains` — число уникальных `domain_id` со значением `traffic > 0`.
-- `country_count` — число уникальных стран.
-- `date_count` — число уникальных дат.
-- `selected_country_count` — число уникальных стран в объединении областей компании и конкурентов.
+```text
+total_traffic = SUM(traffic)
+active_companies = COUNT(DISTINCT company_id WHERE traffic > 0)
+active_domains = COUNT(DISTINCT domain_id WHERE traffic > 0)
+selected_country_count = COUNT(DISTINCT country_id across company and competitor scopes)
+```
+
+`Selected Countries` показывает количество выбранных или фактически попавших в scope стран, а не их сокращённые названия.
 
 ### Traffic Trend
 
-Трафик суммируется по каждой дате. Во frontend отображаются последние 14 доступных точек. Шкала компании и конкурентов общая, поэтому длины полос сопоставимы.
+Трафик суммируется по дате. Company и Competitors используют общую шкалу, поэтому значения визуально сопоставимы.
 
 ### Device Split
 
 ```text
-desktop_traffic = sum(desktop_share_traffic)
-mobile_traffic = sum(mobile_share_traffic)
 desktop_share = desktop_traffic / (desktop_traffic + mobile_traffic)
 mobile_share = mobile_traffic / (desktop_traffic + mobile_traffic)
 ```
@@ -281,242 +323,679 @@ mobile_share = mobile_traffic / (desktop_traffic + mobile_traffic)
 ### Bounce
 
 ```text
-no_bounce = sum(traffic_no_bounce)
-bounce = sum(traffic_bounce)
 bounce_rate = bounce / (bounce + no_bounce)
 ```
 
 ### Engagement
 
-- `unique_visitors` — сумма уникальных посетителей из fact-строк.
-- `pages_per_visit` — средневзвешенное по traffic.
-- `avg_visit_duration` — средневзвешенное по traffic.
+- Unique Visitors — сумма доступных unique visitor показателей;
+- Pages per Visit — средневзвешенное по traffic;
+- Average Visit Duration — средневзвешенное по traffic.
 
 ### Market Signal
 
-Набор дневных точек делится на первую и вторую половины. Сравнивается суммарный трафик двух частей.
-
-- `no_data` — трафик отсутствует.
-- `insufficient_data` — меньше двух дат.
-- `new_activity` — в первой половине трафика нет, во второй он появился.
-- `falling` — growth rate не выше `-10%`.
-- `stable` — growth rate от `-5%` до `5%`.
-- `promising` — рост не ниже `10%`, доля лидера ниже `40%`, bounce rate ниже `55%`.
-- `overheated` — рост не ниже `10%`, доля лидера не ниже `50%`.
-- `growing` — рост не ниже `10%`, но условия `promising/overheated` не выполнены.
-- `mixed` — остальные случаи.
-
-Формула:
+Период делится на первую и вторую половины:
 
 ```text
 growth_rate = (second_half_traffic - first_half_traffic) / first_half_traffic
 ```
 
-## 8. Competitor Intelligence — актуальное техническое состояние
+Статусы:
 
-### Backend
+- `no_data` — трафик отсутствует;
+- `insufficient_data` — недостаточно дат для сравнения;
+- `new_activity` — трафик появился только во второй половине;
+- `falling` — снижение не менее 10%;
+- `stable` — изменение находится примерно в диапазоне от -5% до 5%;
+- `promising` — рост не менее 10%, умеренная концентрация и приемлемый bounce rate;
+- `overheated` — рост сочетается с высокой концентрацией лидера;
+- `growing` — рост не менее 10% без условий promising/overheated;
+- `mixed` — остальные комбинации.
 
-Реализован отдельный service layer:
+Информационное окно Market Signal содержит расшифровку всех статусов.
 
-```text
-backend/app/analytics/competitor_intelligence.py
-```
+## 8. Вкладка Countries
 
-Основная агрегация выполняется по странам одним SQL-запросом. Дополнительно рассчитываются distinct domains и active days.
+### Назначение
 
-Ответ содержит:
+Анализ географического присутствия выбранного competitor scope. Фильтр основной Company не участвует в расчёте этой вкладки.
 
-- summary;
-- top countries;
-- growing countries;
-- declining countries;
-- anchor markets;
-- peripheral markets;
-- country dependency;
-- presence stability;
-- market windows.
-
-### Frontend
-
-Компоненты:
+### API
 
 ```text
-frontend/components/dashboard/competitor-intelligence/
+GET /analytics/competitor-intelligence
 ```
 
-Реализованы:
+### Основные блоки
 
-- пять summary-карточек;
-- таблица Top Countries;
-- таблицы Growing Countries и Declining Countries;
-- списки Anchor Markets и Peripheral Markets;
+- summary competitor presence;
+- Top Countries;
+- Growing Countries;
+- Declining Countries;
+- Anchor Markets;
+- Peripheral Markets;
 - Country Dependency;
 - Presence Stability;
 - Market Windows.
 
-Цветовая логика:
+### Growth Rate
 
-- выбран один или несколько конкурентов — показатели синие;
-- `Competitors = All` — единая агрегированная область и нейтральный цвет;
-- `Competitors = None` — select-state без расчётных карточек.
-
-### Состояния интерфейса
-
-- Loading — skeleton.
-- API error — destructive alert.
-- `Competitors = None` — предложение выбрать конкурента или `All`.
-- Нет данных по активным фильтрам — отдельный empty state.
-- Данные есть — полный аналитический блок.
-
-## 9. Competitor Intelligence — логика расчётов
-
-### Scope
+Выбранный период делится на две половины:
 
 ```text
-project_id
-dateFrom/dateTo
-country
-tld
-competitors
-competitorDomain
-```
-
-При множественном выборе показатели конкурентов суммируются. Аналитика описывает объединённую выбранную конкурентную область.
-
-### Summary
-
-- `total_traffic` — сумма трафика выбранной области.
-- `active_countries` — число стран с `traffic > 0`.
-- `active_domains` — число уникальных доменов с `traffic > 0`.
-- `top_country` — страна с максимальным трафиком.
-- `top_country_share` — доля top country в общем трафике области.
-- `growth_rate` — изменение суммарного трафика между половинами периода.
-
-### Деление периода
-
-Competitor Intelligence делит календарный диапазон пополам по дате:
-
-```text
-first half: date <= midpoint
-second half: date > midpoint
-```
-
-### Country metrics
-
-Для каждой страны рассчитываются:
-
-```text
-traffic
-traffic_share
-first_half_traffic
-second_half_traffic
-growth_rate
-growth_status
-market status
+growth_rate = (second_half_traffic - first_half_traffic) / first_half_traffic
 ```
 
 Growth statuses:
 
-- `new_activity` — первая половина равна `0`, вторая больше `0`;
-- `growing` — growth rate не ниже `10%`;
-- `declining` — growth rate не выше `-10%`;
-- `stable` — остальные ненулевые случаи;
-- `no_data` — трафик равен `0`.
+- `no_data` — данных нет;
+- `new_activity` — активность появилась во второй половине;
+- `growing` — рост не менее 10%;
+- `declining` — снижение не менее 10%;
+- `stable` — изменение не достигло порога 10%.
 
-### Anchor Markets
+### Market role
 
-Страна считается anchor market, если:
-
-```text
-traffic_share >= 0.15
-or rank <= 3
-```
-
-### Peripheral Markets
-
-Страна считается peripheral market, если:
-
-```text
-traffic_share < 0.05
-and country is not an anchor market
-```
+- `anchor` — страна входит в top 3 или даёт не менее 15% трафика;
+- `established` — доля от 5% до 15% вне top 3;
+- `peripheral` — доля ниже 5% вне top 3.
 
 ### Country Dependency
 
-```text
-top1_country_share = доля первой страны
-top3_country_share = сумма долей трёх первых стран
-```
-
-Уровень зависимости:
-
-- `high` — top 1 не ниже `50%` или top 3 не ниже `80%`;
-- `medium` — top 1 не ниже `30%` или top 3 не ниже `60%`;
-- `low` — остальные случаи.
+- `low` — top 1 ниже 30% и top 3 ниже 60%;
+- `medium` — top 1 не менее 30% или top 3 не менее 60%;
+- `high` — top 1 не менее 50% или top 3 не менее 80%.
 
 ### Presence Stability
 
 ```text
-active_days = count distinct date where traffic > 0
-period_days = календарное число дней между dateFrom и dateTo включительно
 stability_rate = active_days / period_days
 ```
 
-Статусы:
-
-- `stable` — не ниже `80%`;
-- `irregular` — от `40%` до `80%`;
-- `weak` — ниже `40%`.
+- `stable` — активность не менее чем в 80% дней;
+- `irregular` — от 40% до 79.9%;
+- `weak` — менее 40%.
 
 ### Market Windows
 
-Market Windows — rule-based аналитические сигналы, а не рекомендации.
+- `declining_presence` — снижение трафика страны;
+- `small_but_growing` — доля ниже 5%, рост не менее 20%;
+- `low_stability` — активность менее чем в 40% дней;
+- `high_dependency` — высокая концентрация в ведущих странах.
 
-- `declining_presence` — country growth rate не выше `-10%`.
-- `small_but_growing` — country share ниже `5%`, growth rate не ниже `20%`.
-- `low_stability` — stability rate ниже `40%`.
-- `high_dependency` — dependency level равен `high`.
+## 9. Вкладка Channels
 
-## 10. Производительность
+### Назначение
 
-Используются индексы:
+Сравнение состава каналов Company и Competitors без разделения интерфейса на отдельные блоки.
+
+### API
 
 ```text
-(project_id, date)
-(project_id, country_id, date)
-(project_id, domain_id, date)
-(project_id, company_id, date)
-(project_id, country_id, domain_id, date)
-(project_id, company_id, country_id, date)
-(project_id, domain_id, country_id, date)
+GET /analytics/channel-intelligence
 ```
 
-## 11. Актуальный статус проверок
+### Структура ответа
 
-На момент обновления паспорта:
+```text
+combined_scopes
+overall_scope
+company_scope
+competitor_scope
+```
 
-- backend Ruff — успешно;
-- backend compileall — успешно;
-- FastAPI route smoke-check — успешно;
-- Competitor Intelligence runtime-запрос к локальной PostgreSQL — успешно;
-- Alembic upgrade до `202606190001` — успешно;
-- frontend ESLint — успешно;
-- frontend TypeScript typecheck — успешно;
-- отдельный набор unit/integration-тестов для Dashboard пока отсутствует;
-- визуальная browser-проверка последнего Competitor Intelligence блока не завершена из-за локальной ошибки фонового запуска процессов `Path/PATH` в рабочей сессии.
+Каждый scope содержит:
 
-## 12. Текущие границы Dashboard
+- summary;
+- channel mix;
+- company channel dependency;
+- channel skews;
+- paid/organic summary;
+- source type breakdown;
+- traffic type breakdown;
+- top journey sources;
+- opportunity signals.
 
-На странице пока не реализованы:
+### Channel Mix
 
-- Market Overview analytics;
-- Channel Intelligence;
-- Device Intelligence;
-- MAS-рекомендации;
-- генерация Reports;
-- opportunity score;
-- budget strategy;
-- фоновые аналитические пересчёты;
-- materialized views.
+Каналы:
 
-Country Intelligence и Competitor Intelligence являются ручным аналитическим слоем и могут позднее использоваться MAS как источник структурированных показателей.
+```text
+direct
+search
+paid
+referral
+social
+```
+
+```text
+total_channel_traffic = direct + search + paid + referral + social
+channel_share = channel_traffic / total_channel_traffic
+```
+
+### Dependency
+
+- `low` — dominant share ниже 40%;
+- `medium` — от 40% до 59.9%;
+- `high` — не менее 60%.
+
+### Channel Skews
+
+- `brand_dependency` — direct не менее 60%;
+- `seo_dependency` — search не менее 60%;
+- `paid_dependency` — paid не менее 35%;
+- `referral_dependency` — referral не менее 30%;
+- `social_dependency` — social не менее 25%;
+- `balanced_mix` — ни один канал не достигает 40%.
+
+### Paid / Organic
+
+Journey traffic классифицируется как paid, organic или unknown. Если traffic type не определён и source type не указывает paid, значение попадает в unknown.
+
+### Opportunity Signals
+
+- `high_search_share` — search не менее 40%;
+- `meaningful_paid_share` — paid не менее 20%;
+- `visible_referral_share` — referral не менее 15%;
+- `visible_social_share` — social не менее 15%;
+- `high_direct_share` — direct не менее 50%;
+- `low_*_share` — соответствующий канал не превышает 3%.
+
+Карточки, полосы и таблицы используют единое зелёно-синее разделение scope.
+
+## 10. Вкладка Devices
+
+### Назначение
+
+Сравнение desktop/mobile трафика и качества аудитории между Company и Competitors.
+
+### API
+
+```text
+GET /analytics/device-intelligence
+```
+
+### Структура ответа
+
+```text
+combined_scopes
+overall_scope
+company_scope
+competitor_scope
+```
+
+Каждый scope содержит:
+
+- summary;
+- quality;
+- bounce split;
+- daily device trend;
+- company device quality;
+- device signals.
+
+### Цветовая семантика
+
+Scope:
+
+- Company — зелёный;
+- Competitors — синий;
+- Overall — нейтральный.
+
+Тип устройства:
+
+- Desktop — `#FB7185`;
+- Mobile — `#FDBA74`.
+
+Цвет устройства используется в легендах, названиях столбцов и split-полосах. Цвет числового значения используется для определения company/competitor scope.
+
+### Summary
+
+- Total Visits;
+- Desktop Visits;
+- Mobile Visits;
+- Desktop Share;
+- Mobile Share;
+- Dominant Device.
+
+`Dominant Device`:
+
+- Desktop — desktop visits больше или равны mobile visits;
+- Mobile — mobile visits больше desktop visits;
+- None — visits отсутствуют.
+
+### Device Quality Index
+
+```text
+duration_score = MIN(MAX(duration, 0) / 180, 1)
+no_bounce_rate = MIN(MAX(1 - bounce_rate, 0), 1)
+quality_index = duration_score * 0.5 + no_bounce_rate * 0.5
+quality_gap = desktop_quality_index - mobile_quality_index
+```
+
+Индекс является сравнительным аналитическим показателем, а не итоговым score или рекомендацией.
+
+### Company Device Quality statuses
+
+- `mobile_quality_gap`;
+- `desktop_quality_advantage`;
+- `mobile_strength`;
+- `balanced_device_quality`;
+- `mixed_device_quality`.
+
+### Device Signals
+
+- `mobile_new_activity`;
+- `mobile_growth_low_quality`;
+- `desktop_quality_advantage`;
+- `mobile_strength`;
+- `balanced_device_quality`.
+
+Информационные окна содержат правила интерпретации этих значений.
+
+## 11. Вкладка Signals
+
+### Назначение
+
+Хранение и просмотр объяснимых rule-based аналитических наблюдений. Сигналы не являются рекомендациями и не заменяют исходные показатели вкладок.
+
+### API
+
+```text
+POST /analytics/signals/recalculate
+GET  /analytics/signals
+GET  /analytics/signals/summary
+POST /analytics/scoring/recalculate
+GET  /analytics/scoring/opportunities
+GET  /analytics/scoring/summary
+```
+
+### Жизненный цикл
+
+1. Пользователь задаёт общие Dashboard-фильтры.
+2. Нажимает `Recalculate signals`.
+3. Backend рассчитывает сигналы отдельно по overall либо по company/competitor scopes.
+4. Предыдущие записи для того же project, периода и calculation version удаляются.
+5. Новые записи сохраняются в `derived_signal`.
+6. GET endpoints возвращают сохранённые записи по периоду, scope, group и severity.
+
+После изменения общих фильтров необходимо повторно нажать `Recalculate signals`. До пересчёта сохранённые записи представляют последний выполненный расчёт соответствующего периода.
+
+### Scope
+
+- `overall` — используется при полном `All/All`;
+- `company` — сигналы company scope;
+- `competitor` — сигналы competitor scope.
+
+Scope входит в детерминированный `signal_key`, поэтому одинаковый тип сигнала может независимо существовать для Company и Competitors.
+
+### Внутренние фильтры
+
+Внутренние фильтры не относятся к общей панели:
+
+```text
+signalGroup
+severity
+```
+
+Они фильтруют уже сохранённые сигналы и хранятся в URL.
+
+### Signal Groups
+
+- `all` — все группы;
+- `growth` — рост, падение и новая активность;
+- `volatility` — стабильность и волатильность;
+- `competition` — концентрация, фрагментация и расширение;
+- `territory` — новое или утраченное присутствие;
+- `channel` — изменение долей каналов;
+- `quality` — ухудшение engagement quality;
+- `device` — различия desktop/mobile.
+
+### Severity
+
+- `low` — информационное или раннее условие;
+- `medium` — существенное условие для наблюдения;
+- `high` — сильное отклонение или повышенный риск;
+- `critical` — зарезервированный максимальный уровень. Текущие calculators его не создают.
+
+Общее правило severity для относительных изменений:
+
+```text
+abs(change_rate) >= 50% -> high
+abs(change_rate) >= 25% -> medium
+иначе -> low
+```
+
+Некоторые сигналы задают severity собственным правилом.
+
+### Основные правила Signals
+
+Growth:
+
+- new activity — первая половина равна нулю, во второй есть трафик;
+- growth acceleration — рост не менее 25%;
+- traffic decline — снижение не менее 20%.
+
+Volatility:
+
+- high volatility — коэффициент дневной волатильности не менее 35%;
+- stable market — волатильность не выше 10%.
+
+Competition и Territory:
+
+- high concentration — top 1 не менее 50% или top 3 не менее 80%;
+- low competitive noise — не более трёх активных компаний при достаточном трафике;
+- fragmented market — top 1 ниже 25% при восьми и более активных компаниях;
+- overheated market — рост не менее 20% при top 1 не менее 50%;
+- competitor expansion — минимум две новые страны и рост выше 20%;
+- new territory — значимая активность появилась во второй половине;
+- forgotten territory — трафик снизился почти до неактивного состояния.
+
+Channel:
+
+- channel shift — абсолютное изменение доли канала не менее 20 процентных пунктов.
+
+Quality:
+
+- traffic quality degradation — bounce rate вырос минимум на 10 п.п. или duration снизился минимум на 20%.
+
+Device:
+
+- используются Device Signals из вкладки Devices.
+
+### Таблица Derived Signals
+
+Столбцы:
+
+- Severity;
+- Group;
+- Type;
+- Entity;
+- Period;
+- Value / Delta;
+- Message.
+
+Логика `Value / Delta`:
+
+```text
+delta_percent -> delta_value -> value -> None
+```
+
+Используется первое доступное значение. Если правило не сработало, отдельная строка сигнала не создаётся.
+
+Все поля таблицы, внутренние фильтры и summary-карточки имеют информационные окна.
+
+## 12. Информационные окна
+
+Компонент:
+
+```text
+frontend/components/dashboard/information-popover.tsx
+```
+
+Поведение:
+
+- открывается кнопкой с вопросительным знаком;
+- рендерится через portal в `document.body`;
+- позиционируется относительно viewport;
+- открывается сверху, если снизу недостаточно места;
+- не сдвигает содержимое страницы;
+- закрывается повторным нажатием, кликом вне окна или `Escape`;
+- пересчитывает позицию при scroll и resize.
+
+Справки добавлены для расчётных показателей и всех классификаций с несколькими статусами.
+
+## 13. API endpoints
+
+```text
+GET  /analytics/filter-options
+GET  /analytics/country-intelligence
+GET  /analytics/competitor-intelligence
+GET  /analytics/channel-intelligence
+GET  /analytics/device-intelligence
+POST /analytics/signals/recalculate
+GET  /analytics/signals
+GET  /analytics/signals/summary
+```
+
+GET-запросы используют TanStack Query. Query keys включают влияющие Dashboard-фильтры, поэтому смена фильтра создаёт отдельный cache key и инициирует загрузку актуального ответа.
+
+## 14. Состояния интерфейса
+
+Каждая аналитическая вкладка обрабатывает:
+
+- loading — skeleton;
+- API error — destructive alert;
+- отсутствующий response — unavailable state;
+- отсутствие данных — информационный alert или пустое состояние блока;
+- выбранный scope без данных — нулевые показатели;
+- оба scope равны None — предложение выбрать Company или Competitors.
+
+Таблицы используют горизонтальный scroll при недостаточной ширине. Навигация по вкладкам поддерживает мышь и клавиши `ArrowLeft`, `ArrowRight`, `Home`, `End`.
+
+## 15. Кэширование и обновление
+
+- TanStack Query кэширует GET-ответы по query key.
+- Изменение URL-фильтра приводит к новому query key.
+- Успешный Signals recalculation инвалидирует списки и summary Signals.
+- Redis не участвует в расчётах Dashboard; он требуется для ingestion worker.
+- Dashboard читает уже загруженные данные из PostgreSQL.
+
+## 16. Производительность
+
+- основные метрики вычисляются SQL-агрегациями;
+- аналитические таблицы имеют индексы по project, date, company, domain и связанным измерениям;
+- Channel, Device и Derived Signals получили дополнительные индексы в миграциях этапов 8–10;
+- derived signals сохраняются, а не пересчитываются при каждом GET;
+- materialized views для Dashboard не используются.
+
+## 17. Миграции
+
+Актуальный head:
+
+```text
+202606210006
+```
+
+Последние аналитические миграции:
+
+```text
+202606210001 - channel intelligence indexes
+202606210002 - device intelligence indexes
+202606210003 - derived_signal table
+202606210004 - derived_signal scope
+202606210005 - opportunity_score table and indexes
+202606210006 - budget_strategy_report table and indexes
+```
+
+После получения изменений необходимо выполнить:
+
+```bash
+make alembic-upgrade
+```
+
+После миграции `202606210004` необходимо повторно пересчитать Signals, чтобы записи получили актуальное scope-разделение.
+
+## 18. Локальный запуск и проверка
+
+Из корня проекта:
+
+```bash
+make db-up
+make redis-up
+make backend-sync
+make frontend-sync
+make alembic-upgrade
+```
+
+Затем открыть три терминала.
+
+Backend:
+
+```bash
+make backend-run
+```
+
+Worker:
+
+```bash
+make worker-run
+```
+
+Frontend:
+
+```bash
+make frontend-dev
+```
+
+Dashboard:
+
+```text
+http://localhost:3000/dashboard
+```
+
+Worker не требуется для чтения Dashboard, но должен быть запущен при загрузке новых файлов.
+
+## 19. Проверки качества
+
+Frontend:
+
+```bash
+cd frontend
+pnpm typecheck
+pnpm lint
+pnpm build
+```
+
+Backend:
+
+```bash
+cd backend
+uv run ruff check app
+uv run python -m compileall -q app
+uv run alembic heads
+```
+
+Runtime-проверка должна включать:
+
+1. `All/All` — один нейтральный scope.
+2. Company + Competitor — два значения с правильными цветами.
+3. Company или Competitor = None — скрытие только отсутствующего scope.
+4. Страна только одной стороны — `0` у отсутствующей стороны.
+5. Множественный выбор стран, компаний и доменов.
+6. TLD cascade.
+7. Закрытие dropdown по outside click и Escape.
+8. Открытие информационных окон вверх при недостатке места.
+9. Signals recalculation и последующая фильтрация group/severity.
+
+## 20. Известные особенности и ограничения
+
+- Signals являются snapshot последнего явного пересчёта для периода; после изменения общих фильтров нужен новый recalculation.
+- Scoring также является snapshot; после изменения общих фильтров нужен `Recalculate scores`.
+- `critical` поддерживается контрактом Signals, но текущие правила его не формируют.
+- Dashboard не выполняет прогнозирование и не создаёт рекомендации.
+- Значение `0` означает отсутствие агрегированного значения в выбранном scope, а не ошибку запроса.
+- Hydration mismatch, возникающий только в обычном Chrome и отсутствующий в Edge/Incognito, связан с расширением, изменяющим DOM до React hydration. Это не является ошибкой расчётов Dashboard.
+- Для корректного frontend runtime backend и PostgreSQL должны быть доступны.
+
+## 21. Правила дальнейшего развития
+
+- Не добавлять фильтр Project: используется один проект через backend default scope.
+- Сохранять общую панель фильтров для всех вкладок.
+- Новые сравнительные показатели должны поддерживать overall/company/competitor scopes.
+- Company должен оставаться зелёным, Competitors — синим.
+- Новые измерения не должны переиспользовать scope-цвета для другого смысла.
+- Выбранный scope без данных должен показывать `0`, а не исчезать.
+- Новые статусы и классификации должны сопровождаться информационным окном со всеми возможными значениями.
+- Rule-based сигналы должны оставаться объяснимыми и хранить calculation version.
+- Изменения схемы `derived_signal` и fact-таблиц должны сопровождаться Alembic migration.
+- Opportunity Score должен оставаться объяснимым аналитическим показателем, а не рекомендацией.
+
+## 22. Вкладка Scoring
+
+### Назначение
+
+Формирует explainable country-level Opportunity Score в диапазоне 0–100. Вкладка отвечает на вопрос, насколько страна выглядит привлекательной по выбранным данным, но не рекомендует выход, бюджет или стратегию.
+
+### API
+
+```text
+POST /analytics/scoring/recalculate
+GET  /analytics/scoring/opportunities
+GET  /analytics/scoring/summary
+```
+
+### Scope
+
+Используются стандартные значения:
+
+```text
+overall
+company
+competitor
+```
+
+При All/All рассчитывается overall ranking. При явном выборе Company/Competitors каждый scope рассчитывается и ранжируется независимо. Если оба scope равны None, пересчёт недоступен.
+
+### Факторы
+
+Opportunity Score включает:
+
+1. Market Size;
+2. Growth;
+3. Traffic Quality;
+4. Competition Level;
+5. Competitor Concentration;
+6. Channel Stability;
+7. Entry Risk;
+8. Position Potential.
+
+Указанные планом веса пропорционально нормализуются до суммы `1.00`, поскольку исходный перечень арифметически даёт `1.10`. Относительный приоритет факторов сохранён.
+
+Каждый фактор содержит:
+
+```text
+raw_value
+score
+weight
+weighted_score
+status
+explanation
+```
+
+### Categories
+
+- `very_high` — 80–100;
+- `high` — 65–79.9999;
+- `medium` — 50–64.9999;
+- `low` — 35–49.9999;
+- `very_low` — 0–34.9999.
+
+### Ranking
+
+Ranking строится отдельно внутри scope по Opportunity Score descending. Tie-breakers:
+
+1. Market Size;
+2. Growth;
+3. Traffic Quality;
+4. Country name ascending.
+
+### Signals и fallback
+
+Scoring использует derived signals той же даты, scope и calculation version. Если signals отсутствуют, расчёт не ломается: Channel Stability получает нейтральный fallback `50` со статусом `not_available`, а UI показывает note.
+
+### UI
+
+Вкладка содержит:
+
+- кнопку `Recalculate scores`;
+- summary cards;
+- горизонтально прокручиваемую ranking table;
+- выбор country row;
+- factor breakdown;
+- Strengths;
+- Weaknesses;
+- Risks;
+- Signals Used;
+- Fallbacks Used.
+
+Scoring сохраняется в БД и после обновления страницы читается через GET endpoints.

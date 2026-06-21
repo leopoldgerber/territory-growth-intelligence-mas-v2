@@ -9,6 +9,11 @@ import type {
   DerivedSignalSummary,
   RecalculateSignalsRequest,
   RecalculateSignalsResponse,
+  OpportunityScoreRecalculateRequest,
+  OpportunityScoreRecalculateResponse,
+  OpportunityScoresResponse,
+  OpportunityScoreSummary,
+  OpportunityScoreScope,
 } from '@/lib/types/analytics';
 
 export type CountryIntelligenceParams = {
@@ -114,6 +119,47 @@ export function getDerivedSignalsSummary(params: DerivedSignalParams) {
 
 export function recalculateDerivedSignals(request: RecalculateSignalsRequest) {
   return fetchApi<RecalculateSignalsResponse>('/analytics/signals/recalculate', {
+    body: JSON.stringify(request),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    method: 'POST',
+  });
+}
+
+export type OpportunityScoreParams = {
+  dateFrom: string;
+  dateTo: string;
+  country: string;
+  scope: OpportunityScoreScope;
+  scoreCategory?: string;
+  limit?: number;
+};
+
+function buildScoringParams(params: OpportunityScoreParams): URLSearchParams {
+  const searchParams = new URLSearchParams();
+  searchParams.set('dateFrom', params.dateFrom);
+  searchParams.set('dateTo', params.dateTo);
+  searchParams.set('country', params.country);
+  searchParams.set('scope', params.scope);
+  searchParams.set('scoreCategory', params.scoreCategory ?? 'all');
+  searchParams.set('limit', String(params.limit ?? 100));
+  return searchParams;
+}
+
+export function getOpportunityScores(params: OpportunityScoreParams) {
+  const searchParams = buildScoringParams(params);
+  return fetchApi<OpportunityScoresResponse>(`/analytics/scoring/opportunities?${searchParams.toString()}`);
+}
+
+export function getOpportunityScoringSummary(params: OpportunityScoreParams) {
+  const searchParams = buildScoringParams(params);
+  searchParams.delete('limit');
+  return fetchApi<OpportunityScoreSummary>(`/analytics/scoring/summary?${searchParams.toString()}`);
+}
+
+export function recalculateOpportunityScores(request: OpportunityScoreRecalculateRequest) {
+  return fetchApi<OpportunityScoreRecalculateResponse>('/analytics/scoring/recalculate', {
     body: JSON.stringify(request),
     headers: {
       'Content-Type': 'application/json',

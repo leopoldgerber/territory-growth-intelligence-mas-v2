@@ -35,7 +35,12 @@ export function DeviceSignalsCard({ combinedScopes, companyScope, competitorScop
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold text-foreground">Device Signals</h3>
         <InformationPopover ariaLabel="About device signals" title="Device Signals">
-          Neutral rule-based comparisons of desktop and mobile traffic quality. They are analytical signals, not recommendations or final scoring.
+          <p><strong>mobile_new_activity:</strong> mobile traffic appears in the second period half.</p>
+          <p><strong>mobile_growth_low_quality:</strong> mobile grows while its quality trails desktop.</p>
+          <p><strong>desktop_quality_advantage:</strong> desktop has a meaningful quality advantage.</p>
+          <p><strong>mobile_strength:</strong> mobile leads traffic with comparable or better quality.</p>
+          <p><strong>balanced_device_quality:</strong> desktop and mobile quality differ by less than 10%.</p>
+          <p className="mt-2"><strong>low:</strong> informative condition. <strong>medium:</strong> material condition worth monitoring.</p>
         </InformationPopover>
       </div>
       <div className="mt-3 grid gap-3">

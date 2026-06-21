@@ -407,3 +407,78 @@ export type RecalculateSignalsResponse = {
   inserted_count: number;
   signals: DerivedSignal[];
 };
+
+export type OpportunityScoreCategory = 'very_high' | 'high' | 'medium' | 'low' | 'very_low';
+export type OpportunityScoreScope = 'overall' | 'company' | 'competitor';
+
+export type OpportunityScoreFactorBreakdown = {
+  factor: string;
+  raw_value: unknown;
+  score: number;
+  weight: number;
+  weighted_score: number;
+  status: string;
+  explanation: string;
+};
+
+export type OpportunityScoreExplanation = {
+  summary: string;
+  factor_breakdown: OpportunityScoreFactorBreakdown[];
+  top_positive_factors: string[];
+  top_negative_factors: string[];
+  signals_used: string[];
+  fallbacks_used: string[];
+};
+
+export type OpportunityScore = {
+  country_id: number;
+  country: string;
+  country_code: string;
+  scope: OpportunityScoreScope;
+  rank: number | null;
+  opportunity_score: number;
+  score_category: OpportunityScoreCategory;
+  factor_scores: Record<string, number>;
+  strengths: string[];
+  weaknesses: string[];
+  risks: string[];
+  explanation: OpportunityScoreExplanation;
+  details: Record<string, unknown> | null;
+  calculation_version: string;
+};
+
+export type OpportunityScoresResponse = {
+  items: OpportunityScore[];
+  note: string | null;
+};
+
+export type OpportunityScoreSummary = {
+  total_countries: number;
+  average_score: number;
+  top_country: string | null;
+  top_score: number;
+  by_category: Partial<Record<OpportunityScoreCategory, number>>;
+};
+
+export type OpportunityScoreRecalculateRequest = {
+  date_from: string;
+  date_to: string;
+  country: string;
+  tld: string;
+  company: string;
+  company_domain: string;
+  competitors: string;
+  competitor_domain: string;
+  calculation_version: string;
+};
+
+export type OpportunityScoreRecalculateResponse = {
+  status: string;
+  calculation_version: string;
+  date_from: string;
+  date_to: string;
+  scores_created: number;
+  scores_updated: number;
+  scopes: OpportunityScoreScope[];
+  note: string | null;
+};

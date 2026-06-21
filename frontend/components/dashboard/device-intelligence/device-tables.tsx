@@ -1,3 +1,4 @@
+import { InformationPopover } from '@/components/dashboard/information-popover';
 import { Badge } from '@/components/ui/badge';
 import type { CompetitorDeviceQuality, DeviceTrendPoint } from '@/lib/types/analytics';
 
@@ -97,7 +98,18 @@ export function CompetitorDeviceTable({ combinedScopes, companyScope, competitor
               <th className="px-3 py-2 text-right font-medium text-[#FB7185]">Desktop Duration</th>
               <th className="px-3 py-2 text-right font-medium text-[#FDBA74]">Mobile Duration</th>
               <th className="px-3 py-2 text-right font-medium">Quality Gap</th>
-              <th className="px-3 py-2 text-right font-medium">Signal</th>
+              <th className="px-3 py-2 text-right font-medium">
+                <span className="flex items-center justify-end gap-1">
+                  Signal
+                  <InformationPopover ariaLabel="About device quality signals" title="Signal">
+                    <p><strong>mobile_quality_gap:</strong> mobile share is meaningful while desktop quality leads.</p>
+                    <p><strong>desktop_quality_advantage:</strong> desktop quality leads by at least 15%.</p>
+                    <p><strong>mobile_strength:</strong> mobile leads traffic with equal or stronger quality.</p>
+                    <p><strong>balanced_device_quality:</strong> quality gap is below 10%.</p>
+                    <p><strong>mixed_device_quality:</strong> none of the stronger classifications applies.</p>
+                  </InformationPopover>
+                </span>
+              </th>
             </tr>
           </thead>
           <tbody>

@@ -1,4 +1,5 @@
 from app.models.tables import (
+    BudgetStrategyReport,
     DerivedSignal,
     DimCalendar,
     DimChannel,
@@ -13,9 +14,11 @@ from app.models.tables import (
     FactTrafficSourcesDaily,
     IngestionRun,
     IngestionValidationError,
+    OpportunityScore,
 )
 
 __all__ = [
+    'BudgetStrategyReport',
     'DimCalendar',
     'DimChannel',
     'DimCompany',
@@ -30,4 +33,5 @@ __all__ = [
     'FactTrafficSourcesDaily',
     'IngestionRun',
     'IngestionValidationError',
+    'OpportunityScore',
 ]
