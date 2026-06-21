@@ -1,3 +1,4 @@
+import { InformationPopover } from '@/components/dashboard/information-popover';
 import type { CompetitorIntelligenceResponse } from '@/lib/types/analytics';
 
 const numberFormatter = new Intl.NumberFormat('en-US');
@@ -41,7 +42,14 @@ export function CompetitorSummaryCards({ data, useAccent }: CompetitorSummaryCar
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
       {cards.map((card) => (
         <div className="rounded-md border bg-background p-4" key={card.label}>
-          <p className="text-xs font-medium text-muted-foreground">{card.label}</p>
+          <div className="flex min-h-6 items-center justify-between gap-2">
+            <p className="text-xs font-medium text-muted-foreground">{card.label}</p>
+            {card.label === 'Growth Rate' ? (
+              <InformationPopover ariaLabel="About growth rate" title="Growth Rate">
+                Compares total traffic in the second half of the selected period with the first half.
+              </InformationPopover>
+            ) : null}
+          </div>
           <div className="mt-2 flex min-w-0 items-baseline gap-2">
             <p className={`truncate text-xl font-semibold ${valueClass}`}>{card.value}</p>
             {card.detail ? <span className="text-xs text-muted-foreground">{card.detail}</span> : null}

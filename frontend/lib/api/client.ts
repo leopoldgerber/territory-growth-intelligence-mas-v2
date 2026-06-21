@@ -10,11 +10,14 @@ export class ApiError extends Error {
   }
 }
 
-export async function fetchApi<TData>(path: string): Promise<TData> {
+export async function fetchApi<TData>(path: string, options: RequestInit = {}): Promise<TData> {
+  const headers = new Headers(options.headers);
+  if (!headers.has('Accept')) {
+    headers.set('Accept', 'application/json');
+  }
   const response = await fetch(`${apiBaseUrl}${path}`, {
-    headers: {
-      Accept: 'application/json',
-    },
+    ...options,
+    headers,
   });
 
   if (!response.ok) {

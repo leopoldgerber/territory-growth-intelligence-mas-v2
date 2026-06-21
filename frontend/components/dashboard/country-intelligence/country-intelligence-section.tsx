@@ -1,11 +1,10 @@
 'use client';
 
-import { CircleHelp } from 'lucide-react';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
+import { InformationPopover } from '@/components/dashboard/information-popover';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCountryIntelligenceQuery } from '@/lib/api/analytics-queries';
 import type { CountryIntelligenceResponse, TrafficTrendPoint } from '@/lib/types/analytics';
@@ -492,67 +491,26 @@ function MetricPanels({
 }
 
 function MarketSignalHeader() {
-  const [isOpen, setIsOpen] = useState(false);
-  const infoRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function closeOutside(event: PointerEvent): void {
-      if (infoRef.current && !infoRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-
-    function closeEscape(event: KeyboardEvent): void {
-      if (event.key === 'Escape') {
-        setIsOpen(false);
-      }
-    }
-
-    document.addEventListener('pointerdown', closeOutside);
-    document.addEventListener('keydown', closeEscape);
-    return () => {
-      document.removeEventListener('pointerdown', closeOutside);
-      document.removeEventListener('keydown', closeEscape);
-    };
-  }, []);
-
   return (
-    <div className="relative flex items-center justify-between gap-3" ref={infoRef}>
+    <div className="flex items-center justify-between gap-3">
       <h3 className="text-sm font-semibold text-foreground">Market Signal</h3>
-      <Button
-        aria-expanded={isOpen}
-        aria-label="About market signal types"
-        className="h-7 w-7"
-        onClick={() => setIsOpen((currentValue) => !currentValue)}
-        size="icon"
-        title="About market signal types"
-        type="button"
-        variant="ghost"
+      <InformationPopover
+        ariaLabel="About market signal types"
+        className="max-h-96 w-[min(32rem,calc(100vw-3rem))] overflow-y-auto"
+        title="Market signal types"
       >
-        <CircleHelp className="h-4 w-4" />
-      </Button>
-      {isOpen ? (
-        <div
-          aria-label="Market signal types"
-          className="absolute right-0 top-9 z-30 max-h-96 w-[min(32rem,calc(100vw-3rem))] overflow-y-auto rounded-md border bg-background p-4 shadow-lg"
-          role="dialog"
-        >
-          <p className="text-sm font-semibold text-foreground">Market signal types</p>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            The selected period is split into two halves. Traffic in the second half is compared with the first.
-          </p>
-          <div className="mt-3 grid gap-3">
-            {marketSignalTypes.map((signal) => (
-              <div className="grid gap-1" key={signal.status}>
-                <Badge className="w-fit" variant={signalVariant(signal.status)}>
-                  {signal.status}
-                </Badge>
-                <p className="text-xs leading-5 text-muted-foreground">{signal.description}</p>
-              </div>
-            ))}
-          </div>
+        <p>The selected period is split into two halves. Traffic in the second half is compared with the first.</p>
+        <div className="mt-3 grid gap-3">
+          {marketSignalTypes.map((signal) => (
+            <div className="grid gap-1" key={signal.status}>
+              <Badge className="w-fit" variant={signalVariant(signal.status)}>
+                {signal.status}
+              </Badge>
+              <p>{signal.description}</p>
+            </div>
+          ))}
         </div>
-      ) : null}
+      </InformationPopover>
     </div>
   );
 }
@@ -635,7 +593,7 @@ export function CountryIntelligenceSection() {
       <section className="rounded-md border bg-card/40 p-5">
         <div className="space-y-4">
           <div className="space-y-2">
-            <h2 className="text-lg font-semibold tracking-normal text-foreground">Country Intelligence</h2>
+            <h2 className="text-lg font-semibold tracking-normal text-foreground">Market Overview</h2>
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
               Country-level traffic and market analysis for selected dashboard filters.
             </p>
@@ -661,7 +619,7 @@ export function CountryIntelligenceSection() {
       <section className="rounded-md border bg-card/40 p-5">
         <div className="space-y-4">
           <div className="space-y-2">
-            <h2 className="text-lg font-semibold tracking-normal text-foreground">Country Intelligence</h2>
+            <h2 className="text-lg font-semibold tracking-normal text-foreground">Market Overview</h2>
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
               Country-level traffic and market analysis for selected dashboard filters.
             </p>
@@ -679,7 +637,7 @@ export function CountryIntelligenceSection() {
     <section className="rounded-md border bg-card/40 p-5">
       <div className="space-y-5">
         <div className="space-y-2">
-          <h2 className="text-lg font-semibold tracking-normal text-foreground">Country Intelligence</h2>
+          <h2 className="text-lg font-semibold tracking-normal text-foreground">Market Overview</h2>
           <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
             Country-level traffic and market analysis for selected dashboard filters.
           </p>

@@ -1,4 +1,5 @@
 from app.models.tables import (
+    DerivedSignal,
     DimCalendar,
     DimChannel,
     DimCompany,
@@ -22,6 +23,7 @@ __all__ = [
     'DimCountryRegion',
     'DimDomain',
     'DimRegion',
+    'DerivedSignal',
     'FactDeviceTrendsDaily',
     'FactJourneySourcesDaily',
     'FactTrafficCountriesDaily',

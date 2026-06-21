@@ -279,6 +279,7 @@ def fetch_filter_options(
     competitor_scope_active = resolved_competitors != [] and (
         resolved_competitors is not None or resolved_competitor_domains not in (None, [])
     )
+    country_scope_filters: list[Any] = []
 
     if company_scope_active:
         company_scope_filters = build_filters(
@@ -291,7 +292,7 @@ def fetch_filter_options(
             resolved_tlds,
         )
         company_country_ids = select(FactTrafficCountriesDaily.country_id).where(*company_scope_filters).distinct()
-        country_filters.append(FactTrafficCountriesDaily.country_id.in_(company_country_ids))
+        country_scope_filters.append(FactTrafficCountriesDaily.country_id.in_(company_country_ids))
     if competitor_scope_active:
         competitor_scope_filters = build_filters(
             resolved_project_id,
@@ -305,7 +306,9 @@ def fetch_filter_options(
         competitor_country_ids = (
             select(FactTrafficCountriesDaily.country_id).where(*competitor_scope_filters).distinct()
         )
-        country_filters.append(FactTrafficCountriesDaily.country_id.in_(competitor_country_ids))
+        country_scope_filters.append(FactTrafficCountriesDaily.country_id.in_(competitor_country_ids))
+    if country_scope_filters:
+        country_filters.append(or_(*country_scope_filters))
 
     company_filters = build_filters(
         resolved_project_id,

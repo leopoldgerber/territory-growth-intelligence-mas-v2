@@ -1,3 +1,4 @@
+import { InformationPopover } from '@/components/dashboard/information-popover';
 import { Badge } from '@/components/ui/badge';
 import type { CompetitorCountryMetric } from '@/lib/types/analytics';
 
@@ -44,8 +45,37 @@ export function CompetitorCountryTable({ countries, emptyMessage, title, useAcce
                 <th className="px-3 py-2 text-left font-medium">Country</th>
                 <th className="px-3 py-2 text-right font-medium">Traffic</th>
                 <th className="px-3 py-2 text-right font-medium">Traffic Share</th>
-                <th className="px-3 py-2 text-right font-medium">Growth Rate</th>
-                <th className="px-3 py-2 text-right font-medium">Status</th>
+                <th className="px-3 py-2 text-right font-medium">
+                  <span className="flex items-center justify-end gap-1">
+                    Growth Rate
+                    <InformationPopover ariaLabel="About country growth rate" title="Growth Rate">
+                      Compares country traffic in the second half of the selected period with the first half.
+                    </InformationPopover>
+                  </span>
+                </th>
+                <th className="px-3 py-2 text-right font-medium">
+                  <span className="flex items-center justify-end gap-1">
+                    Status
+                    <InformationPopover ariaLabel="About country statuses" title="Status">
+                      <div className="grid gap-3">
+                        <div>
+                          <p className="font-medium text-foreground">Traffic movement</p>
+                          <p><strong>new_activity:</strong> traffic appears only in the second half.</p>
+                          <p><strong>growing:</strong> traffic increased by at least 10%.</p>
+                          <p><strong>declining:</strong> traffic decreased by at least 10%.</p>
+                          <p><strong>stable:</strong> traffic is present without a 10% movement.</p>
+                          <p><strong>no_data:</strong> no traffic is available.</p>
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground">Market role</p>
+                          <p><strong>anchor:</strong> a top-three country or at least 15% of traffic.</p>
+                          <p><strong>established:</strong> between 5% and 15% of traffic outside the top three.</p>
+                          <p><strong>peripheral:</strong> less than 5% of traffic outside the top three.</p>
+                        </div>
+                      </div>
+                    </InformationPopover>
+                  </span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -85,7 +115,14 @@ export function CompetitorMovementTable({ countries, emptyMessage, title, useAcc
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+      <div className="flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        <InformationPopover ariaLabel={`About ${title.toLowerCase()}`} title={title}>
+          {title === 'Growing Countries'
+            ? 'Countries with at least 10% traffic growth, including countries where traffic appeared only in the second half of the period.'
+            : 'Countries where traffic declined by at least 10% between the first and second halves of the selected period.'}
+        </InformationPopover>
+      </div>
       <div className="overflow-hidden rounded-md border bg-background">
         {countries.length === 0 ? (
           <p className="p-4 text-sm text-muted-foreground">{emptyMessage}</p>

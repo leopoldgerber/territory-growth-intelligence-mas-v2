@@ -1,3 +1,4 @@
+import { InformationPopover } from '@/components/dashboard/information-popover';
 import { Badge } from '@/components/ui/badge';
 import type { CompetitorCountryMetric, CompetitorIntelligenceResponse } from '@/lib/types/analytics';
 
@@ -37,7 +38,14 @@ function MarketList({ countries, emptyMessage, title, useAccent }: MarketListPro
 
   return (
     <div className="rounded-md border bg-background p-4">
-      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+      <div className="flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        <InformationPopover ariaLabel={`About ${title.toLowerCase()}`} title={title}>
+          {title === 'Anchor Markets'
+            ? 'The three highest-traffic countries and any country contributing at least 15% of selected traffic.'
+            : 'Countries contributing less than 5% of selected traffic.'}
+        </InformationPopover>
+      </div>
       {countries.length === 0 ? (
         <p className="mt-3 text-sm text-muted-foreground">{emptyMessage}</p>
       ) : (
@@ -75,7 +83,12 @@ export function CompetitorMarketAnalysis({ data, useAccent }: MarketAnalysisProp
       />
       <div className="rounded-md border bg-background p-4">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-sm font-semibold text-foreground">Country Dependency</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-foreground">Country Dependency</h3>
+            <InformationPopover ariaLabel="About country dependency" title="Country Dependency">
+              Measures traffic concentration in the leading country and top three countries. Higher concentration means greater dependency on fewer markets.
+            </InformationPopover>
+          </div>
           <Badge variant={analysisVariant(data.dependency.dependency_level)}>
             {data.dependency.dependency_level}
           </Badge>
@@ -97,7 +110,12 @@ export function CompetitorMarketAnalysis({ data, useAccent }: MarketAnalysisProp
       </div>
       <div className="rounded-md border bg-background p-4">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-sm font-semibold text-foreground">Presence Stability</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-foreground">Presence Stability</h3>
+            <InformationPopover ariaLabel="About presence stability" title="Presence Stability">
+              Shows the share of days with positive traffic in the selected period: stable from 80%, irregular from 40%, and weak below 40%.
+            </InformationPopover>
+          </div>
           <Badge variant={analysisVariant(data.presence_stability.status)}>{data.presence_stability.status}</Badge>
         </div>
         <div className="mt-4 grid gap-3 text-sm">
@@ -122,7 +140,12 @@ export function CompetitorMarketAnalysis({ data, useAccent }: MarketAnalysisProp
         </div>
       </div>
       <div className="rounded-md border bg-background p-4 xl:col-span-2">
-        <h3 className="text-sm font-semibold text-foreground">Market Windows</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-foreground">Market Windows</h3>
+          <InformationPopover ariaLabel="About market windows" title="Market Windows">
+            Rule-based opportunities and risks detected from declining presence, small but rapidly growing markets, low stability, or high country dependency.
+          </InformationPopover>
+        </div>
         {data.market_windows.length === 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">No rule-based market signals for selected filters.</p>
         ) : (

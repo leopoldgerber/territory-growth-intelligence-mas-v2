@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import BigInteger, Boolean, Date, DateTime, ForeignKey, Index, Integer, Numeric, String, Text, func
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -191,6 +193,52 @@ class IngestionValidationError(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
+class DerivedSignal(Base):
+    __tablename__ = 'derived_signal'
+    __table_args__ = (
+        Index('ix_derived_signal_project_type', 'project_id', 'signal_type'),
+        Index('ix_derived_signal_project_group', 'project_id', 'signal_group'),
+        Index('ix_derived_signal_project_entity', 'project_id', 'entity_type'),
+        Index('ix_derived_signal_project_country', 'project_id', 'country_id'),
+        Index('ix_derived_signal_project_company', 'project_id', 'company_id'),
+        Index('ix_derived_signal_project_domain', 'project_id', 'domain_id'),
+        Index('ix_derived_signal_project_period', 'project_id', 'date_from', 'date_to'),
+        Index('ix_derived_signal_project_severity', 'project_id', 'severity'),
+        Index('ix_derived_signal_project_scope', 'project_id', 'scope'),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    signal_key: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    project_id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), nullable=False)
+    signal_type: Mapped[str] = mapped_column(Text, nullable=False)
+    signal_group: Mapped[str] = mapped_column(Text, nullable=False)
+    entity_type: Mapped[str] = mapped_column(Text, nullable=False)
+    entity_id: Mapped[str | None] = mapped_column(Text)
+    country_id: Mapped[int | None] = mapped_column(ForeignKey('dim_country.id'))
+    company_id: Mapped[int | None] = mapped_column(ForeignKey('dim_company.id'))
+    domain_id: Mapped[int | None] = mapped_column(ForeignKey('dim_domain.id'))
+    date_from: Mapped[date] = mapped_column(Date, nullable=False)
+    date_to: Mapped[date] = mapped_column(Date, nullable=False)
+    period_grain: Mapped[str] = mapped_column(Text, nullable=False, default='custom')
+    severity: Mapped[str] = mapped_column(Text, nullable=False)
+    scope: Mapped[str] = mapped_column(Text, nullable=False, default='overall')
+    score: Mapped[Decimal | None] = mapped_column(Numeric(10, 6))
+    value: Mapped[Decimal | None] = mapped_column(Numeric(18, 6))
+    baseline_value: Mapped[Decimal | None] = mapped_column(Numeric(18, 6))
+    delta_value: Mapped[Decimal | None] = mapped_column(Numeric(18, 6))
+    delta_percent: Mapped[Decimal | None] = mapped_column(Numeric(18, 6))
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    details: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    calculation_version: Mapped[str] = mapped_column(Text, nullable=False, default='v1')
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+
 class FactTrafficCountriesDaily(Base):
     __tablename__ = 'fact_traffic_countries_daily'
     __table_args__ = (
@@ -200,6 +248,14 @@ class FactTrafficCountriesDaily(Base):
         Index('ix_fact_traffic_countries_daily_country_id', 'country_id'),
         Index('ix_fact_traffic_countries_daily_project_id', 'project_id'),
         Index('ix_fact_traffic_countries_daily_ingestion_run_id', 'ingestion_run_id'),
+        Index(
+            'ix_fact_traffic_countries_project_country_company_domain_date',
+            'project_id',
+            'country_id',
+            'company_id',
+            'domain_id',
+            'date',
+        ),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
@@ -244,6 +300,16 @@ class FactTrafficSourcesDaily(Base):
         Index('ix_fact_traffic_sources_daily_domain_id', 'domain_id'),
         Index('ix_fact_traffic_sources_daily_project_id', 'project_id'),
         Index('ix_fact_traffic_sources_daily_ingestion_run_id', 'ingestion_run_id'),
+        Index('ix_fact_traffic_sources_project_date', 'project_id', 'date'),
+        Index('ix_fact_traffic_sources_project_company_date', 'project_id', 'company_id', 'date'),
+        Index('ix_fact_traffic_sources_project_domain_date', 'project_id', 'domain_id', 'date'),
+        Index(
+            'ix_fact_traffic_sources_project_company_domain_date',
+            'project_id',
+            'company_id',
+            'domain_id',
+            'date',
+        ),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
@@ -278,6 +344,12 @@ class FactJourneySourcesDaily(Base):
         Index('ix_fact_journey_sources_daily_domain_id', 'domain_id'),
         Index('ix_fact_journey_sources_daily_project_id', 'project_id'),
         Index('ix_fact_journey_sources_daily_ingestion_run_id', 'ingestion_run_id'),
+        Index('ix_fact_journey_sources_project_date', 'project_id', 'date'),
+        Index('ix_fact_journey_sources_project_company_date', 'project_id', 'company_id', 'date'),
+        Index('ix_fact_journey_sources_project_domain_date', 'project_id', 'domain_id', 'date'),
+        Index('ix_fact_journey_sources_project_source_date', 'project_id', 'source_type', 'date'),
+        Index('ix_fact_journey_sources_project_traffic_date', 'project_id', 'traffic_type', 'date'),
+        Index('ix_fact_journey_sources_project_search_date', 'project_id', 'search_source', 'date'),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
@@ -313,6 +385,16 @@ class FactDeviceTrendsDaily(Base):
         Index('ix_fact_device_trends_daily_domain_id', 'domain_id'),
         Index('ix_fact_device_trends_daily_project_id', 'project_id'),
         Index('ix_fact_device_trends_daily_ingestion_run_id', 'ingestion_run_id'),
+        Index('ix_fact_device_trends_project_date', 'project_id', 'date'),
+        Index('ix_fact_device_trends_project_company_date', 'project_id', 'company_id', 'date'),
+        Index('ix_fact_device_trends_project_domain_date', 'project_id', 'domain_id', 'date'),
+        Index(
+            'ix_fact_device_trends_project_company_domain_date',
+            'project_id',
+            'company_id',
+            'domain_id',
+            'date',
+        ),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)

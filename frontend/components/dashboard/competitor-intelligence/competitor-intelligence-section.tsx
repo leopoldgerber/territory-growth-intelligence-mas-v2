@@ -29,7 +29,7 @@ function EmptySection({ description, title }: { description: string; title: stri
     <section className="rounded-md border bg-card/40 p-5">
       <div className="space-y-4">
         <div className="space-y-2">
-          <h2 className="text-lg font-semibold tracking-normal text-foreground">Competitor Intelligence</h2>
+          <h2 className="text-lg font-semibold tracking-normal text-foreground">Countries</h2>
           <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
             Competitor presence, country concentration, growth, stability, and rule-based market signals.
           </p>
@@ -94,7 +94,7 @@ export function CompetitorIntelligenceSection() {
     <section className="rounded-md border bg-card/40 p-5">
       <div className="space-y-5">
         <div className="space-y-2">
-          <h2 className="text-lg font-semibold tracking-normal text-foreground">Competitor Intelligence</h2>
+          <h2 className="text-lg font-semibold tracking-normal text-foreground">Countries</h2>
           <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
             Competitor presence, country concentration, growth, stability, and rule-based market signals.
           </p>

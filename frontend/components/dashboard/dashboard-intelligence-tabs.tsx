@@ -1,32 +1,53 @@
 'use client';
 
-import { Flag, Users } from 'lucide-react';
+import { Activity, Flag, MonitorSmartphone, Radio, Users, type LucideIcon } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { KeyboardEvent } from 'react';
 
 import { CompetitorIntelligenceSection } from '@/components/dashboard/competitor-intelligence/competitor-intelligence-section';
 import { CountryIntelligenceSection } from '@/components/dashboard/country-intelligence/country-intelligence-section';
+import { ChannelIntelligenceSection } from '@/components/dashboard/channel-intelligence/channel-intelligence-section';
+import { DeviceIntelligenceSection } from '@/components/dashboard/device-intelligence/device-intelligence-section';
+import { DerivedSignalsSection } from '@/components/dashboard/derived-signals/derived-signals-section';
 import { cn } from '@/lib/utils';
 
-type IntelligenceTab = 'country' | 'competitor';
+type IntelligenceTab = 'country' | 'competitor' | 'channel' | 'device' | 'signals';
 
 const intelligenceTabs: {
   id: IntelligenceTab;
+  icon: LucideIcon;
   label: string;
 }[] = [
   {
     id: 'country',
-    label: 'Country Intelligence',
+    icon: Flag,
+    label: 'Market Overview',
   },
   {
     id: 'competitor',
-    label: 'Competitor Intelligence',
+    icon: Users,
+    label: 'Countries',
+  },
+  {
+    id: 'channel',
+    icon: Radio,
+    label: 'Channels',
+  },
+  {
+    id: 'device',
+    icon: MonitorSmartphone,
+    label: 'Devices',
+  },
+  {
+    id: 'signals',
+    icon: Activity,
+    label: 'Signals',
   },
 ];
 
 function read_active_tab(value: string | null): IntelligenceTab {
-  if (value === 'competitor') {
-    return 'competitor';
+  if (value === 'competitor' || value === 'channel' || value === 'device' || value === 'signals') {
+    return value;
   }
   return 'country';
 }
@@ -69,7 +90,7 @@ export function DashboardIntelligenceTabs() {
         <div className="flex min-w-0 gap-1 overflow-x-auto">
           {intelligenceTabs.map((tab, index) => {
             const isActive = activeTab === tab.id;
-            const Icon = tab.id === 'country' ? Flag : Users;
+            const Icon = tab.icon;
 
             return (
               <button
@@ -101,7 +122,11 @@ export function DashboardIntelligenceTabs() {
         id={`${activeTab}-intelligence-panel`}
         role="tabpanel"
       >
-        {activeTab === 'country' ? <CountryIntelligenceSection /> : <CompetitorIntelligenceSection />}
+        {activeTab === 'country' ? <CountryIntelligenceSection /> : null}
+        {activeTab === 'competitor' ? <CompetitorIntelligenceSection /> : null}
+        {activeTab === 'channel' ? <ChannelIntelligenceSection /> : null}
+        {activeTab === 'device' ? <DeviceIntelligenceSection /> : null}
+        {activeTab === 'signals' ? <DerivedSignalsSection /> : null}
       </div>
     </div>
   );
