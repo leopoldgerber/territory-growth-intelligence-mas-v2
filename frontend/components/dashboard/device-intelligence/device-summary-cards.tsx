@@ -51,7 +51,13 @@ export function DeviceSummaryCards({ combinedScopes, companyScope, competitorSco
     },
     {
       label: 'Dominant Device',
-      description: 'Desktop means desktop visits are greater than or equal to mobile visits; Mobile means mobile leads; None means no visits are available.',
+      description: (
+        <>
+          <p><strong>Desktop:</strong> desktop visits are greater than or equal to mobile visits.</p>
+          <p><strong>Mobile:</strong> mobile visits are greater than desktop visits.</p>
+          <p><strong>None:</strong> no visits are available.</p>
+        </>
+      ),
       companyValue: company ? format_label(company.dominant_device) : null,
       competitorValue: competitor ? format_label(competitor.dominant_device) : null,
     },

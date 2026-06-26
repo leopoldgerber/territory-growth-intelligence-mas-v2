@@ -43,10 +43,10 @@ export function BudgetStrategyReportView({ report }: { report: BudgetStrategyRep
         <p className="mt-3 text-sm leading-6 text-muted-foreground">{report.recommended_approach}</p>
       </div>
 
-      <div className="overflow-x-auto rounded-md border bg-background">
-        <table className="w-full min-w-[850px] text-sm">
+      <div className="overflow-hidden rounded-md border bg-background">
+        <table className="w-full table-fixed text-sm">
           <thead className="bg-secondary text-muted-foreground"><tr><th className="px-3 py-2 text-left">Channel</th><th className="px-3 py-2 text-left">Role</th><th className="px-3 py-2 text-right">Share</th><th className="px-3 py-2 text-right">Amount</th><th className="px-3 py-2 text-left">Reason</th></tr></thead>
-          <tbody>{report.allocation.map((item) => <tr className="border-t" key={item.channel}><td className="px-3 py-2 font-medium">{format_label(item.channel)}</td><td className="px-3 py-2"><Badge variant={role_variant(item.role)}>{item.role}</Badge></td><td className="px-3 py-2 text-right">{percentFormatter.format(item.share)}</td><td className="px-3 py-2 text-right">{amountFormatter.format(item.amount)} {report.currency}</td><td className="max-w-md px-3 py-2 text-xs text-muted-foreground">{item.reason}</td></tr>)}</tbody>
+          <tbody>{report.allocation.map((item) => <tr className="border-t" key={item.channel}><td className="break-words px-3 py-2 font-medium">{format_label(item.channel)}</td><td className="px-3 py-2"><Badge className="whitespace-normal break-words text-[11px]" variant={role_variant(item.role)}>{item.role}</Badge></td><td className="px-3 py-2 text-right">{percentFormatter.format(item.share)}</td><td className="break-words px-3 py-2 text-right">{amountFormatter.format(item.amount)} {report.currency}</td><td className="break-words px-3 py-2 text-xs text-muted-foreground">{item.reason}</td></tr>)}</tbody>
         </table>
       </div>
 

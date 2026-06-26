@@ -16,6 +16,10 @@ import {
 } from '@/lib/api/report-queries';
 
 
+function read_error(error: unknown): string {
+  return error instanceof Error ? error.message : 'Unknown report generation error.';
+}
+
 export function BudgetStrategyPage() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const listQuery = useBudgetStrategiesQuery();
@@ -46,7 +50,7 @@ export function BudgetStrategyPage() {
           }}
         />
 
-        {generateMutation.isError ? <Alert variant="destructive"><AlertTitle>Failed to generate budget strategy.</AlertTitle><AlertDescription>Check the country, period, budget, backend logs, and available analytics.</AlertDescription></Alert> : null}
+        {generateMutation.isError ? <Alert variant="destructive"><AlertTitle>Failed to generate budget strategy.</AlertTitle><AlertDescription>{read_error(generateMutation.error)}</AlertDescription></Alert> : null}
         {generateMutation.isSuccess ? <Alert><AlertTitle>Budget strategy generated.</AlertTitle><AlertDescription>The report was saved and remains available after page refresh.</AlertDescription></Alert> : null}
 
         {listQuery.isLoading ? <Skeleton className="h-28" /> : null}

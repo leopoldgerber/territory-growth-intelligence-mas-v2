@@ -6,6 +6,7 @@ import { useEffect, useMemo } from 'react';
 import { MultiSelectFilter } from '@/components/dashboard/multi-select-filter';
 import { Button } from '@/components/ui/button';
 import { useAnalyticsFilterOptionsQuery } from '@/lib/api/analytics-queries';
+import { filterDomainOptions, sanitizeFilterSelection } from '@/lib/dashboard/filter-options';
 import {
   buildDashboardHref,
   type DashboardFilterKey,
@@ -13,11 +14,8 @@ import {
   defaultDashboardFilters,
   ensureDashboardParams,
   readDashboardFilters,
-  readDashboardValues,
   updateDashboardParams,
-  writeDashboardValues,
 } from '@/lib/dashboard/query-params';
-import type { DomainFilterOption, FilterOption } from '@/lib/types/analytics';
 
 const filterFields: {
   key: DashboardFilterKey;
@@ -38,31 +36,6 @@ const filterFields: {
 
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 
-function filterDomains(domains: DomainFilterOption[], companyValue: string, tldValue: string): DomainFilterOption[] {
-  if (companyValue === 'none') {
-    return [];
-  }
-  const companyIds = new Set(readDashboardValues(companyValue).map(Number));
-  const tlds = new Set(readDashboardValues(tldValue));
-  return domains.filter((domain) => {
-    const matchesCompany = companyIds.size === 0 || companyIds.has(domain.company_id);
-    const matchesTld = tlds.size === 0 || (domain.tld !== null && tlds.has(domain.tld));
-    return matchesCompany && matchesTld;
-  });
-}
-
-function sanitizeSelection(value: string, options: FilterOption[], allowNone = false): string {
-  if (value === 'none') {
-    return allowNone ? 'none' : 'all';
-  }
-  const selectedValues = readDashboardValues(value);
-  if (selectedValues.length === 0) {
-    return 'all';
-  }
-  const optionValues = new Set(options.map((option) => option.value));
-  return writeDashboardValues(selectedValues.filter((item) => optionValues.has(item)));
-}
-
 export function DashboardFilters() {
   const pathname = usePathname();
   const router = useRouter();
@@ -75,8 +48,8 @@ export function DashboardFilters() {
   const tlds = filterOptionsQuery.data?.tlds ?? [];
   const companies = filterOptionsQuery.data?.companies ?? [];
   const domains = filterOptionsQuery.data?.domains ?? [];
-  const companyDomains = filterDomains(domains, filters.company, filters.tld);
-  const competitorDomains = filterDomains(domains, filters.competitors, filters.tld);
+  const companyDomains = filterDomainOptions(domains, filters.company, filters.tld);
+  const competitorDomains = filterDomainOptions(domains, filters.competitors, filters.tld);
 
   useEffect(() => {
     const previousParams = new URLSearchParams(searchText);
@@ -95,14 +68,14 @@ export function DashboardFilters() {
     }
 
     const updates: Partial<DashboardFilters> = {};
-    const countryValue = sanitizeSelection(filters.country, filterOptionsQuery.data.countries);
-    const tldValue = sanitizeSelection(filters.tld, filterOptionsQuery.data.tlds);
-    const companyValue = sanitizeSelection(filters.company, filterOptionsQuery.data.companies, true);
-    const competitorsValue = sanitizeSelection(filters.competitors, filterOptionsQuery.data.companies, true);
-    const availableCompanyDomains = filterDomains(filterOptionsQuery.data.domains, companyValue, tldValue);
-    const availableCompetitorDomains = filterDomains(filterOptionsQuery.data.domains, competitorsValue, tldValue);
-    const companyDomainValue = sanitizeSelection(filters.companyDomain, availableCompanyDomains);
-    const competitorDomainValue = sanitizeSelection(filters.competitorDomain, availableCompetitorDomains);
+    const countryValue = sanitizeFilterSelection(filters.country, filterOptionsQuery.data.countries, true);
+    const tldValue = sanitizeFilterSelection(filters.tld, filterOptionsQuery.data.tlds, true);
+    const companyValue = sanitizeFilterSelection(filters.company, filterOptionsQuery.data.companies, true);
+    const competitorsValue = sanitizeFilterSelection(filters.competitors, filterOptionsQuery.data.companies, true);
+    const availableCompanyDomains = filterDomainOptions(filterOptionsQuery.data.domains, companyValue, tldValue);
+    const availableCompetitorDomains = filterDomainOptions(filterOptionsQuery.data.domains, competitorsValue, tldValue);
+    const companyDomainValue = sanitizeFilterSelection(filters.companyDomain, availableCompanyDomains, true);
+    const competitorDomainValue = sanitizeFilterSelection(filters.competitorDomain, availableCompetitorDomains, true);
 
     if (countryValue !== filters.country) {
       updates.country = countryValue;
@@ -161,18 +134,18 @@ export function DashboardFilters() {
     domainKey: Extract<DashboardFilterKey, 'companyDomain' | 'competitorDomain'>,
     value: string,
   ): void {
-    const availableDomains = filterDomains(domains, value, filters.tld);
-    const domainValue = sanitizeSelection(filters[domainKey], availableDomains);
+    const availableDomains = filterDomainOptions(domains, value, filters.tld);
+    const domainValue = sanitizeFilterSelection(filters[domainKey], availableDomains, true);
     updateFilters({ [companyKey]: value, [domainKey]: domainValue });
   }
 
   function updateTldFilter(value: string): void {
-    const availableCompanyDomains = filterDomains(domains, filters.company, value);
-    const availableCompetitorDomains = filterDomains(domains, filters.competitors, value);
+    const availableCompanyDomains = filterDomainOptions(domains, filters.company, value);
+    const availableCompetitorDomains = filterDomainOptions(domains, filters.competitors, value);
     updateFilters({
       tld: value,
-      companyDomain: sanitizeSelection(filters.companyDomain, availableCompanyDomains),
-      competitorDomain: sanitizeSelection(filters.competitorDomain, availableCompetitorDomains),
+      companyDomain: sanitizeFilterSelection(filters.companyDomain, availableCompanyDomains, true),
+      competitorDomain: sanitizeFilterSelection(filters.competitorDomain, availableCompetitorDomains, true),
     });
   }
 
@@ -225,6 +198,7 @@ export function DashboardFilters() {
           </label>
         ))}
         <MultiSelectFilter
+          allowNone
           disabled={filterOptionsQuery.isLoading}
           label="Country"
           onChange={(value) => updateFilter('country', value)}
@@ -232,6 +206,7 @@ export function DashboardFilters() {
           value={filters.country}
         />
         <MultiSelectFilter
+          allowNone
           disabled={filterOptionsQuery.isLoading}
           label="Top-Level Domain"
           onChange={updateTldFilter}
@@ -247,6 +222,7 @@ export function DashboardFilters() {
           value={filters.company}
         />
         <MultiSelectFilter
+          allowNone
           disabled={filterOptionsQuery.isLoading}
           label="Company Domain"
           onChange={(value) => updateFilter('companyDomain', value)}
@@ -262,6 +238,7 @@ export function DashboardFilters() {
           value={filters.competitors}
         />
         <MultiSelectFilter
+          allowNone
           disabled={filterOptionsQuery.isLoading}
           label="Competitors Domain"
           onChange={(value) => updateFilter('competitorDomain', value)}

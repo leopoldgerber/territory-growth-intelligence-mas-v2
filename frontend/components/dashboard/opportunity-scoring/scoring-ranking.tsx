@@ -1,6 +1,9 @@
 import { InformationPopover } from '@/components/dashboard/information-popover';
+import { SortableTableHeader } from '@/components/dashboard/sortable-table-header';
 import { Badge } from '@/components/ui/badge';
+import { useTableSort, type SortColumn } from '@/lib/dashboard/table-sorting';
 import type { OpportunityScore, OpportunityScoreCategory, OpportunityScoreFactorBreakdown } from '@/lib/types/analytics';
+import type { ReactNode } from 'react';
 
 
 const scoreFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 });
@@ -17,12 +20,21 @@ const factorLabels: Record<string, string> = {
   position_potential: 'Position Potential',
 };
 
-const headerDescriptions: Record<string, string> = {
+const headerDescriptions: Record<string, ReactNode> = {
   Rank: 'Position inside the corresponding overall, company, or competitor scope.',
   Country: 'Country evaluated from the selected Dashboard data.',
   Scope: 'Overall is neutral; Company is green; Competitor is blue.',
   Score: 'Weighted analytical score from 0 to 100 across eight factors.',
-  Category: 'Very High: 80-100; High: 65-79.9999; Medium: 50-64.9999; Low: 35-49.9999; Very Low: 0-34.9999.',
+  Category: (
+    <>
+      <p>Score status.</p>
+      <p><strong>very_high:</strong> 80-100.</p>
+      <p><strong>high:</strong> 65-79.9999.</p>
+      <p><strong>medium:</strong> 50-64.9999.</p>
+      <p><strong>low:</strong> 35-49.9999.</p>
+      <p><strong>very_low:</strong> 0-34.9999.</p>
+    </>
+  ),
   'Market Size': 'Traffic percentile among countries in the same scope.',
   Growth: 'Traffic movement between the first and second period halves.',
   Quality: 'Weighted duration, no-bounce rate, and pages per visit.',
@@ -60,16 +72,49 @@ function format_label(value: string): string {
   return value.replaceAll('_', ' ').replace(/^./, (character) => character.toUpperCase());
 }
 
-function ScoringHeader({ label, align = 'right' }: { label: string; align?: 'left' | 'right' }) {
+type ScoringSortKey =
+  | 'category'
+  | 'competition_level'
+  | 'concentration'
+  | 'country'
+  | 'entry_risk'
+  | 'growth'
+  | 'market_size'
+  | 'opportunity_score'
+  | 'position_potential'
+  | 'rank'
+  | 'scope'
+  | 'traffic_quality'
+  | 'channel_stability';
+
+function ScoringHeader({
+  activeKey,
+  align = 'right',
+  label,
+  onSort,
+  sortDirection,
+  sortKey,
+}: {
+  activeKey: ScoringSortKey;
+  align?: 'left' | 'right';
+  label: string;
+  onSort: (key: ScoringSortKey) => void;
+  sortDirection: 'asc' | 'desc';
+  sortKey: ScoringSortKey;
+}) {
   return (
-    <th className={`px-3 py-2 font-medium ${align === 'right' ? 'text-right' : 'text-left'}`}>
-      <span className={`flex items-center gap-1 ${align === 'right' ? 'justify-end' : 'justify-start'}`}>
-        {label}
-        <InformationPopover ariaLabel={`About ${label.toLowerCase()}`} title={label}>
-          {headerDescriptions[label]}
-        </InformationPopover>
-      </span>
-    </th>
+    <SortableTableHeader
+      activeKey={activeKey}
+      align={align}
+      label={label}
+      onSort={onSort}
+      sortDirection={sortDirection}
+      sortKey={sortKey}
+    >
+      <InformationPopover ariaLabel={`About ${label.toLowerCase()}`} title={label}>
+        {headerDescriptions[label]}
+      </InformationPopover>
+    </SortableTableHeader>
   );
 }
 
@@ -100,36 +145,55 @@ export function ScoringRankingTable({
   selectedKey: string;
   onSelect: (key: string) => void;
 }) {
+  const columns: SortColumn<OpportunityScore, ScoringSortKey>[] = [
+    { key: 'rank', getValue: (item) => item.rank ?? 0 },
+    { key: 'country', getValue: (item) => item.country },
+    { key: 'scope', getValue: (item) => item.scope },
+    { key: 'opportunity_score', getValue: (item) => item.opportunity_score },
+    { key: 'category', getValue: (item) => item.score_category },
+    ...Object.keys(factorLabels).map((factor) => ({
+      key: factor as ScoringSortKey,
+      getValue: (item: OpportunityScore) => item.factor_scores[factor] ?? 0,
+    })),
+  ];
+  const { requestSort, sortedRows, sortState } = useTableSort(items, columns, {
+    direction: 'asc',
+    key: 'rank',
+  });
+
   return (
-    <div className="overflow-x-auto rounded-md border bg-background">
-      <table className="w-full min-w-[1500px] text-sm">
+    <div className="overflow-hidden rounded-md border bg-background">
+      <table className="w-full table-fixed text-xs">
         <thead className="bg-secondary text-muted-foreground">
           <tr>
-            <ScoringHeader align="left" label="Rank" />
-            <ScoringHeader align="left" label="Country" />
-            <ScoringHeader align="left" label="Scope" />
-            <ScoringHeader label="Score" />
-            <ScoringHeader align="left" label="Category" />
-            {Object.values(factorLabels).map((label) => <ScoringHeader key={label} label={label} />)}
+            <ScoringHeader activeKey={sortState.key} align="left" label="Rank" onSort={requestSort} sortDirection={sortState.direction} sortKey="rank" />
+            <ScoringHeader activeKey={sortState.key} align="left" label="Country" onSort={requestSort} sortDirection={sortState.direction} sortKey="country" />
+            <ScoringHeader activeKey={sortState.key} align="left" label="Scope" onSort={requestSort} sortDirection={sortState.direction} sortKey="scope" />
+            <ScoringHeader activeKey={sortState.key} label="Score" onSort={requestSort} sortDirection={sortState.direction} sortKey="opportunity_score" />
+            <ScoringHeader activeKey={sortState.key} align="left" label="Category" onSort={requestSort} sortDirection={sortState.direction} sortKey="category" />
+            {Object.entries(factorLabels).map(([factor, label]) => (
+              <ScoringHeader activeKey={sortState.key} key={label} label={label} onSort={requestSort} sortDirection={sortState.direction} sortKey={factor as ScoringSortKey} />
+            ))}
           </tr>
         </thead>
         <tbody>
-          {items.map((item) => {
+          {sortedRows.map((item) => {
             const key = `${item.scope}-${item.country_id}`;
             const valueClass = scope_class(item.scope);
             return (
               <tr className={`border-t ${selectedKey === key ? 'bg-secondary/60' : ''}`} key={key}>
-                <td className="px-3 py-2 text-muted-foreground">{item.rank ?? '-'}</td>
-                <td className="px-3 py-2">
-                  <button className={`font-medium hover:underline ${valueClass}`} onClick={() => onSelect(key)} type="button">
-                    {item.country} <span className="text-xs text-muted-foreground">{item.country_code}</span>
+                <td className="px-2 py-2 text-muted-foreground">{item.rank ?? '-'}</td>
+                <td className="px-2 py-2">
+                  <button className={`break-words text-left font-medium leading-4 hover:underline ${valueClass}`} onClick={() => onSelect(key)} type="button">
+                    <span>{item.country}</span>
+                    <span className="block text-[11px] text-muted-foreground">{item.country_code}</span>
                   </button>
                 </td>
-                <td className={`px-3 py-2 font-medium ${valueClass}`}>{format_label(item.scope)}</td>
-                <td className={`px-3 py-2 text-right text-base font-semibold ${valueClass}`}>{scoreFormatter.format(item.opportunity_score)}</td>
-                <td className="px-3 py-2"><Badge variant={category_variant(item.score_category)}>{format_label(item.score_category)}</Badge></td>
+                <td className={`break-words px-2 py-2 font-medium ${valueClass}`}>{format_label(item.scope)}</td>
+                <td className={`px-2 py-2 text-right font-semibold ${valueClass}`}>{scoreFormatter.format(item.opportunity_score)}</td>
+                <td className="px-2 py-2"><Badge className="whitespace-normal break-words text-[11px]" variant={category_variant(item.score_category)}>{format_label(item.score_category)}</Badge></td>
                 {Object.keys(factorLabels).map((factor) => (
-                  <td className={`px-3 py-2 text-right ${valueClass}`} key={factor}>
+                  <td className={`px-2 py-2 text-right ${valueClass}`} key={factor}>
                     {scoreFormatter.format(item.factor_scores[factor] ?? 0)}
                   </td>
                 ))}
@@ -155,6 +219,61 @@ function DetailList({ title, items }: { title: string; items: string[] }) {
   );
 }
 
+function FactorBreakdownTable({ factors }: { factors: OpportunityScoreFactorBreakdown[] }) {
+  type FactorSortKey = 'explanation' | 'factor' | 'raw_value' | 'score' | 'status' | 'weight' | 'weighted_score';
+  const columns: SortColumn<OpportunityScoreFactorBreakdown, FactorSortKey>[] = [
+    { key: 'factor', getValue: (factor) => factorLabels[factor.factor] ?? format_label(factor.factor) },
+    { key: 'raw_value', getValue: (factor) => format_raw(factor) },
+    { key: 'score', getValue: (factor) => factor.score },
+    { key: 'weight', getValue: (factor) => factor.weight },
+    { key: 'weighted_score', getValue: (factor) => factor.weighted_score },
+    { key: 'status', getValue: (factor) => factor.status },
+    { key: 'explanation', getValue: (factor) => factor.explanation },
+  ];
+  const { requestSort, sortedRows, sortState } = useTableSort(factors, columns, {
+    direction: 'desc',
+    key: 'weighted_score',
+  });
+
+  return (
+    <div className="overflow-hidden rounded-md border bg-background">
+      <table className="w-full table-fixed text-xs">
+        <thead className="bg-secondary text-muted-foreground">
+          <tr>
+            <SortableTableHeader activeKey={sortState.key} label="Factor" onSort={requestSort} sortDirection={sortState.direction} sortKey="factor" />
+            <SortableTableHeader activeKey={sortState.key} label="Raw Value" onSort={requestSort} sortDirection={sortState.direction} sortKey="raw_value" />
+            <SortableTableHeader activeKey={sortState.key} align="right" label="Score" onSort={requestSort} sortDirection={sortState.direction} sortKey="score" />
+            <SortableTableHeader activeKey={sortState.key} align="right" label="Weight" onSort={requestSort} sortDirection={sortState.direction} sortKey="weight" />
+            <SortableTableHeader activeKey={sortState.key} align="right" label="Weighted Score" onSort={requestSort} sortDirection={sortState.direction} sortKey="weighted_score" />
+            <SortableTableHeader activeKey={sortState.key} label="Status" onSort={requestSort} sortDirection={sortState.direction} sortKey="status">
+              <InformationPopover ariaLabel="About factor statuses" title="Factor Status">
+                <p><strong>strong:</strong> factor score is at least 75.</p>
+                <p><strong>moderate:</strong> factor score is above 40 and below 75.</p>
+                <p><strong>weak:</strong> factor score is 40 or lower.</p>
+                <p><strong>not_available:</strong> source data is missing and a neutral fallback is used.</p>
+              </InformationPopover>
+            </SortableTableHeader>
+            <SortableTableHeader activeKey={sortState.key} label="Explanation" onSort={requestSort} sortDirection={sortState.direction} sortKey="explanation" />
+          </tr>
+        </thead>
+        <tbody>
+          {sortedRows.map((factor) => (
+            <tr className="border-t align-top" key={factor.factor}>
+              <td className="break-words px-2 py-2 font-medium text-foreground">{factorLabels[factor.factor] ?? format_label(factor.factor)}</td>
+              <td className="break-words px-2 py-2 text-muted-foreground">{format_raw(factor)}</td>
+              <td className="px-2 py-2 text-right">{scoreFormatter.format(factor.score)}</td>
+              <td className="px-2 py-2 text-right">{percentFormatter.format(factor.weight)}</td>
+              <td className="px-2 py-2 text-right">{scoreFormatter.format(factor.weighted_score)}</td>
+              <td className="px-2 py-2"><Badge className="whitespace-normal break-words text-[11px]" variant="outline">{format_label(factor.status)}</Badge></td>
+              <td className="break-words px-2 py-2 leading-5 text-muted-foreground">{factor.explanation}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export function ScoringDetail({ item }: { item: OpportunityScore }) {
   return (
     <div className="space-y-4 border-t pt-5">
@@ -169,44 +288,7 @@ export function ScoringDetail({ item }: { item: OpportunityScore }) {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-md border bg-background">
-        <table className="w-full min-w-[900px] text-sm">
-          <thead className="bg-secondary text-muted-foreground">
-            <tr>
-              <th className="px-3 py-2 text-left font-medium">Factor</th>
-              <th className="px-3 py-2 text-left font-medium">Raw Value</th>
-              <th className="px-3 py-2 text-right font-medium">Score</th>
-              <th className="px-3 py-2 text-right font-medium">Weight</th>
-              <th className="px-3 py-2 text-right font-medium">Weighted Score</th>
-              <th className="px-3 py-2 text-left font-medium">
-                <span className="flex items-center gap-1">
-                  Status
-                  <InformationPopover ariaLabel="About factor statuses" title="Factor Status">
-                    <p><strong>strong:</strong> factor score is at least 75.</p>
-                    <p><strong>moderate:</strong> factor score is above 40 and below 75.</p>
-                    <p><strong>weak:</strong> factor score is 40 or lower.</p>
-                    <p><strong>not_available:</strong> source data is missing and a neutral fallback is used.</p>
-                  </InformationPopover>
-                </span>
-              </th>
-              <th className="px-3 py-2 text-left font-medium">Explanation</th>
-            </tr>
-          </thead>
-          <tbody>
-            {item.explanation.factor_breakdown.map((factor) => (
-              <tr className="border-t align-top" key={factor.factor}>
-                <td className="px-3 py-2 font-medium text-foreground">{factorLabels[factor.factor] ?? format_label(factor.factor)}</td>
-                <td className="max-w-xs px-3 py-2 text-xs text-muted-foreground">{format_raw(factor)}</td>
-                <td className="px-3 py-2 text-right">{scoreFormatter.format(factor.score)}</td>
-                <td className="px-3 py-2 text-right">{percentFormatter.format(factor.weight)}</td>
-                <td className="px-3 py-2 text-right">{scoreFormatter.format(factor.weighted_score)}</td>
-                <td className="px-3 py-2"><Badge variant="outline">{format_label(factor.status)}</Badge></td>
-                <td className="max-w-md px-3 py-2 text-xs leading-5 text-muted-foreground">{factor.explanation}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <FactorBreakdownTable factors={item.explanation.factor_breakdown} />
 
       <div className="grid gap-4 lg:grid-cols-3">
         <DetailList items={item.strengths} title="Strengths" />

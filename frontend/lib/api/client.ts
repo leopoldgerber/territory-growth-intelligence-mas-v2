@@ -21,7 +21,25 @@ export async function fetchApi<TData>(path: string, options: RequestInit = {}): 
   });
 
   if (!response.ok) {
-    throw new ApiError(`Request failed with status ${response.status}`, response.status);
+    let message = `Request failed with status ${response.status}`;
+    try {
+      const payload = (await response.json()) as {
+        detail?: string | Array<{ msg?: string }>;
+      };
+      if (typeof payload.detail === 'string') {
+        message = payload.detail;
+      } else if (Array.isArray(payload.detail)) {
+        const validationMessages = payload.detail
+          .map((item) => item.msg)
+          .filter((item): item is string => Boolean(item));
+        if (validationMessages.length) {
+          message = validationMessages.join(' ');
+        }
+      }
+    } catch {
+      message = `Request failed with status ${response.status}`;
+    }
+    throw new ApiError(message, response.status);
   }
 
   const data = (await response.json()) as TData;

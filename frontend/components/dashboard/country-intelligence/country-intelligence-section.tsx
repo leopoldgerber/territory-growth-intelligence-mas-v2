@@ -1,13 +1,15 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 
 import { InformationPopover } from '@/components/dashboard/information-popover';
+import { SortableTableHeader } from '@/components/dashboard/sortable-table-header';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCountryIntelligenceQuery } from '@/lib/api/analytics-queries';
-import type { CountryIntelligenceResponse, TrafficTrendPoint } from '@/lib/types/analytics';
+import { useTableSort, type SortColumn } from '@/lib/dashboard/table-sorting';
+import type { CountryIntelligenceResponse, TopCompetitor, TrafficTrendPoint } from '@/lib/types/analytics';
 
 const numberFormatter = new Intl.NumberFormat('en-US');
 const compactFormatter = new Intl.NumberFormat('en-US', {
@@ -218,6 +220,24 @@ function TopCompetitorsTable({
   combinedScopes: boolean;
   showCompetitors: boolean;
 }) {
+  type RankedCompetitor = TopCompetitor & { rank: number };
+  type TopCompetitorSortKey = 'company' | 'domains_count' | 'rank' | 'traffic' | 'traffic_share';
+  const rows = useMemo(
+    () => data.top_competitors.map((competitor, index) => ({ ...competitor, rank: index + 1 })),
+    [data.top_competitors],
+  );
+  const columns: SortColumn<RankedCompetitor, TopCompetitorSortKey>[] = [
+    { key: 'rank', getValue: (competitor) => competitor.rank },
+    { key: 'company', getValue: (competitor) => competitor.company },
+    { key: 'traffic', getValue: (competitor) => competitor.traffic },
+    { key: 'traffic_share', getValue: (competitor) => competitor.traffic_share },
+    { key: 'domains_count', getValue: (competitor) => competitor.domains_count },
+  ];
+  const { requestSort, sortedRows, sortState } = useTableSort(rows, columns, {
+    direction: 'asc',
+    key: 'rank',
+  });
+
   if (!showCompetitors) {
     return <p className="text-sm text-muted-foreground">Competitors are not selected.</p>;
   }
@@ -236,17 +256,17 @@ function TopCompetitorsTable({
       <table className="w-full text-sm">
         <thead className="bg-secondary text-muted-foreground">
           <tr>
-            <th className="px-3 py-2 text-left font-medium">Rank</th>
-            <th className="px-3 py-2 text-left font-medium">Company</th>
-            <th className="px-3 py-2 text-right font-medium">Traffic</th>
-            <th className="px-3 py-2 text-right font-medium">Traffic Share</th>
-            <th className="px-3 py-2 text-right font-medium">Domains Count</th>
+            <SortableTableHeader activeKey={sortState.key} label="Rank" onSort={requestSort} sortDirection={sortState.direction} sortKey="rank" />
+            <SortableTableHeader activeKey={sortState.key} label="Company" onSort={requestSort} sortDirection={sortState.direction} sortKey="company" />
+            <SortableTableHeader activeKey={sortState.key} align="right" label="Traffic" onSort={requestSort} sortDirection={sortState.direction} sortKey="traffic" />
+            <SortableTableHeader activeKey={sortState.key} align="right" label="Traffic Share" onSort={requestSort} sortDirection={sortState.direction} sortKey="traffic_share" />
+            <SortableTableHeader activeKey={sortState.key} align="right" label="Domains Count" onSort={requestSort} sortDirection={sortState.direction} sortKey="domains_count" />
           </tr>
         </thead>
         <tbody>
-          {data.top_competitors.map((competitor, index) => (
+          {sortedRows.map((competitor) => (
             <tr key={competitor.company_id} className="border-t">
-              <td className="px-3 py-2 text-muted-foreground">{index + 1}</td>
+              <td className="px-3 py-2 text-muted-foreground">{competitor.rank}</td>
               <td className={`px-3 py-2 font-medium ${combinedScopes ? 'text-foreground' : 'text-sky-500'}`}>
                 {competitor.company}
               </td>

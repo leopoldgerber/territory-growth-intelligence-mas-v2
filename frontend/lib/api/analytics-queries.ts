@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 
 import {
@@ -46,6 +46,7 @@ export function useAnalyticsFilterOptionsQuery() {
         competitors: filters.competitors,
         competitorDomain: filters.competitorDomain,
       }),
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -77,6 +78,7 @@ export function useCountryIntelligenceQuery() {
         competitorDomain: filters.competitorDomain,
         limit: 10,
       }),
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -106,6 +108,7 @@ export function useCompetitorIntelligenceQuery() {
         competitorDomain: filters.competitorDomain,
         limit: 10,
       }),
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -137,6 +140,7 @@ export function useChannelIntelligenceQuery() {
         competitorDomain: filters.competitorDomain,
         limit: 10,
       }),
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -168,6 +172,7 @@ export function useDeviceIntelligenceQuery() {
         competitorDomain: filters.competitorDomain,
         limit: 10,
       }),
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -202,6 +207,7 @@ export function useDerivedSignalsQuery(scope: 'overall' | 'company' | 'competito
         scope,
         limit: 100,
       }),
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -235,6 +241,7 @@ export function useDerivedSignalsSummaryQuery(scope: 'overall' | 'company' | 'co
         severity,
         scope,
       }),
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -291,6 +298,7 @@ export function useOpportunityScoresQuery(scope: 'overall' | 'company' | 'compet
         scope,
         limit: 100,
       }),
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -319,6 +327,7 @@ export function useOpportunityScoringSummaryQuery(scope: 'overall' | 'company' |
         country: filters.country,
         scope,
       }),
+    placeholderData: keepPreviousData,
   });
 }
 

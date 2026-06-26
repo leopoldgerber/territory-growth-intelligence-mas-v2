@@ -93,7 +93,7 @@ export function DashboardIntelligenceTabs() {
   return (
     <div className="grid gap-4">
       <div aria-label="Dashboard intelligence views" className="border-b" role="tablist">
-        <div className="flex min-w-0 gap-1 overflow-x-auto">
+        <div className="flex min-w-0 flex-wrap gap-1">
           {intelligenceTabs.map((tab, index) => {
             const isActive = activeTab === tab.id;
             const Icon = tab.icon;

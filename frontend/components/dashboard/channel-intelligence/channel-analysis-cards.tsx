@@ -33,7 +33,10 @@ export function PaidOrganicCard({ combinedScopes, companyScope, competitorScope 
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold text-foreground">Paid / Organic</h3>
         <InformationPopover ariaLabel="About paid and organic traffic" title="Paid / Organic">
-          Journey traffic classified as paid, organic, or unknown. Shares use total classified journey traffic.
+          <p>Journey traffic classified by acquisition payment type. Shares use total classified journey traffic.</p>
+          <p><strong>Paid:</strong> traffic from paid acquisition sources.</p>
+          <p><strong>Organic:</strong> traffic from non-paid acquisition sources.</p>
+          <p><strong>Unknown:</strong> traffic where paid or organic classification is unavailable.</p>
         </InformationPopover>
       </div>
       <div className="mt-4 grid gap-3">
@@ -91,9 +94,16 @@ export function BreakdownCard({ combinedScopes, companyScope, competitorScope, t
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold text-foreground">{title}</h3>
         <InformationPopover ariaLabel={`About ${title.toLowerCase()}`} title={title}>
-          {type === 'source'
-            ? 'Journey traffic grouped by acquisition source type with traffic totals and shares.'
-            : 'Journey traffic grouped by paid, organic, or unknown traffic classification.'}
+          {type === 'source' ? (
+            <p>Journey traffic grouped by acquisition source type with traffic totals and shares.</p>
+          ) : (
+            <>
+              <p>Journey traffic grouped by traffic classification.</p>
+              <p><strong>paid:</strong> traffic from paid acquisition sources.</p>
+              <p><strong>organic:</strong> traffic from non-paid acquisition sources.</p>
+              <p><strong>unknown:</strong> traffic where classification is unavailable.</p>
+            </>
+          )}
         </InformationPopover>
       </div>
       <div className="mt-4 grid gap-3">
@@ -171,6 +181,7 @@ export function ChannelSkewsCard({ combinedScopes, companyScope, competitorScope
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold text-foreground">Channel Skews</h3>
         <InformationPopover ariaLabel="About channel skews" title="Channel Skews">
+          <p>These statuses describe channel concentration or balance inside a company channel mix.</p>
           <p><strong>brand_dependency:</strong> direct traffic is at least 60%.</p>
           <p><strong>seo_dependency:</strong> search traffic is at least 60%.</p>
           <p><strong>paid_dependency:</strong> paid traffic is at least 35%.</p>
@@ -208,12 +219,27 @@ export function OpportunitySignalsCard({ combinedScopes, companyScope, competito
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold text-foreground">Opportunity Signals</h3>
         <InformationPopover ariaLabel="About opportunity signals" title="Opportunity Signals">
-          <p><strong>high_search_share:</strong> search represents at least 40%.</p>
-          <p><strong>meaningful_paid_share:</strong> paid represents at least 20%.</p>
-          <p><strong>visible_referral_share:</strong> referral represents at least 15%.</p>
-          <p><strong>visible_social_share:</strong> social represents at least 15%.</p>
-          <p><strong>high_direct_share:</strong> direct represents at least 50%.</p>
-          <p><strong>low_*_share:</strong> the named channel represents 3% or less.</p>
+          <p>Each item has a type badge and a specific signal value.</p>
+          <div className="mt-3 grid gap-2">
+            <div>
+              <p className="font-medium text-foreground">Types</p>
+              <p><strong>seo:</strong> search is a material acquisition direction.</p>
+              <p><strong>paid:</strong> paid acquisition has meaningful presence.</p>
+              <p><strong>partnerships:</strong> referral traffic may indicate partnership-driven acquisition.</p>
+              <p><strong>social:</strong> social traffic has meaningful presence.</p>
+              <p><strong>brand:</strong> direct traffic is a major acquisition channel.</p>
+              <p><strong>channel_gap:</strong> a channel is nearly absent and may represent a gap or unused route.</p>
+            </div>
+            <div>
+              <p className="font-medium text-foreground">Signals</p>
+              <p><strong>high_search_share:</strong> search represents at least 40%.</p>
+              <p><strong>meaningful_paid_share:</strong> paid represents at least 20%.</p>
+              <p><strong>visible_referral_share:</strong> referral represents at least 15%.</p>
+              <p><strong>visible_social_share:</strong> social represents at least 15%.</p>
+              <p><strong>high_direct_share:</strong> direct represents at least 50%.</p>
+              <p><strong>low_*_share:</strong> the named channel represents 3% or less.</p>
+            </div>
+          </div>
         </InformationPopover>
       </div>
       <div className="mt-3 grid gap-3">

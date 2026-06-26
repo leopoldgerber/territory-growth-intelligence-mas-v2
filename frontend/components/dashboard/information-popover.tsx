@@ -123,7 +123,9 @@ export function InformationPopover({ ariaLabel, children, className, title }: In
               style={panelPosition}
             >
               <p className="text-sm font-semibold text-foreground">{title}</p>
-              <div className="mt-1 text-xs font-normal leading-5 text-muted-foreground">{children}</div>
+              <div className="mt-1 text-xs font-normal leading-5 text-muted-foreground [&_strong]:rounded-sm [&_strong]:bg-secondary [&_strong]:px-1 [&_strong]:py-0.5 [&_strong]:font-semibold [&_strong]:text-foreground">
+                {children}
+              </div>
             </div>,
             document.body,
           )

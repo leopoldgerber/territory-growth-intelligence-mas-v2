@@ -1,5 +1,7 @@
 import { InformationPopover } from '@/components/dashboard/information-popover';
+import { SortableTableHeader } from '@/components/dashboard/sortable-table-header';
 import { Badge } from '@/components/ui/badge';
+import { useTableSort, type SortColumn } from '@/lib/dashboard/table-sorting';
 import type { CompetitorCountryMetric } from '@/lib/types/analytics';
 
 const numberFormatter = new Intl.NumberFormat('en-US');
@@ -30,6 +32,22 @@ function statusVariant(status: string): 'default' | 'secondary' | 'outline' | 's
 
 export function CompetitorCountryTable({ countries, emptyMessage, title, useAccent }: CountryTableProps) {
   const valueClass = useAccent ? 'text-sky-500' : 'text-foreground';
+  type RankedCountry = CompetitorCountryMetric & { rank: number };
+  type CountrySortKey = 'country' | 'growth_rate' | 'growth_status' | 'rank' | 'status' | 'traffic' | 'traffic_share';
+  const rows = countries.map((country, index) => ({ ...country, rank: index + 1 }));
+  const columns: SortColumn<RankedCountry, CountrySortKey>[] = [
+    { key: 'rank', getValue: (country) => country.rank },
+    { key: 'country', getValue: (country) => country.country },
+    { key: 'traffic', getValue: (country) => country.traffic },
+    { key: 'traffic_share', getValue: (country) => country.traffic_share },
+    { key: 'growth_rate', getValue: (country) => country.growth_rate },
+    { key: 'growth_status', getValue: (country) => country.growth_status },
+    { key: 'status', getValue: (country) => country.status },
+  ];
+  const { requestSort, sortedRows, sortState } = useTableSort(rows, columns, {
+    direction: 'asc',
+    key: 'rank',
+  });
 
   return (
     <div className="space-y-3">
@@ -37,34 +55,30 @@ export function CompetitorCountryTable({ countries, emptyMessage, title, useAcce
       {countries.length === 0 ? (
         <div className="rounded-md border bg-background p-4 text-sm text-muted-foreground">{emptyMessage}</div>
       ) : (
-        <div className="overflow-x-auto rounded-md border bg-background">
-          <table className="w-full min-w-[660px] text-sm">
+        <div className="overflow-hidden rounded-md border bg-background">
+          <table className="w-full table-fixed text-sm">
             <thead className="bg-secondary text-muted-foreground">
               <tr>
-                <th className="px-3 py-2 text-left font-medium">Rank</th>
-                <th className="px-3 py-2 text-left font-medium">Country</th>
-                <th className="px-3 py-2 text-right font-medium">Traffic</th>
-                <th className="px-3 py-2 text-right font-medium">Traffic Share</th>
-                <th className="px-3 py-2 text-right font-medium">
-                  <span className="flex items-center justify-end gap-1">
-                    Growth Rate
+                <SortableTableHeader activeKey={sortState.key} label="Rank" onSort={requestSort} sortDirection={sortState.direction} sortKey="rank" />
+                <SortableTableHeader activeKey={sortState.key} label="Country" onSort={requestSort} sortDirection={sortState.direction} sortKey="country" />
+                <SortableTableHeader activeKey={sortState.key} align="right" label="Traffic" onSort={requestSort} sortDirection={sortState.direction} sortKey="traffic" />
+                <SortableTableHeader activeKey={sortState.key} align="right" label="Traffic Share" onSort={requestSort} sortDirection={sortState.direction} sortKey="traffic_share" />
+                <SortableTableHeader activeKey={sortState.key} align="right" label="Growth Rate" onSort={requestSort} sortDirection={sortState.direction} sortKey="growth_rate">
                     <InformationPopover ariaLabel="About country growth rate" title="Growth Rate">
                       Compares country traffic in the second half of the selected period with the first half.
                     </InformationPopover>
-                  </span>
-                </th>
-                <th className="px-3 py-2 text-right font-medium">
-                  <span className="flex items-center justify-end gap-1">
-                    Status
+                </SortableTableHeader>
+                <SortableTableHeader activeKey={sortState.key} align="right" label="Status" onSort={requestSort} sortDirection={sortState.direction} sortKey="status">
                     <InformationPopover ariaLabel="About country statuses" title="Status">
                       <div className="grid gap-3">
+                        <p>Each row has two status badges: traffic movement and market role.</p>
                         <div>
                           <p className="font-medium text-foreground">Traffic movement</p>
-                          <p><strong>new_activity:</strong> traffic appears only in the second half.</p>
-                          <p><strong>growing:</strong> traffic increased by at least 10%.</p>
-                          <p><strong>declining:</strong> traffic decreased by at least 10%.</p>
-                          <p><strong>stable:</strong> traffic is present without a 10% movement.</p>
-                          <p><strong>no_data:</strong> no traffic is available.</p>
+                          <p><strong>new_activity:</strong> traffic is zero in the first half and positive in the second half.</p>
+                          <p><strong>growing:</strong> traffic increased by at least 10% between period halves.</p>
+                          <p><strong>declining:</strong> traffic decreased by at least 10% between period halves.</p>
+                          <p><strong>stable:</strong> traffic is present, but movement stays between -10% and 10%.</p>
+                          <p><strong>no_data:</strong> no positive traffic is available for the country.</p>
                         </div>
                         <div>
                           <p className="font-medium text-foreground">Market role</p>
@@ -74,16 +88,16 @@ export function CompetitorCountryTable({ countries, emptyMessage, title, useAcce
                         </div>
                       </div>
                     </InformationPopover>
-                  </span>
-                </th>
+                </SortableTableHeader>
               </tr>
             </thead>
             <tbody>
-              {countries.map((country, index) => (
+              {sortedRows.map((country) => (
                 <tr className="border-t" key={country.country_id}>
-                  <td className="px-3 py-2 text-muted-foreground">{index + 1}</td>
-                  <td className={`px-3 py-2 font-medium ${valueClass}`}>
-                    {country.country} <span className="text-xs text-muted-foreground">{country.country_code}</span>
+                  <td className="px-3 py-2 text-muted-foreground">{country.rank}</td>
+                  <td className={`break-words px-3 py-2 font-medium ${valueClass}`}>
+                    <span>{country.country}</span>
+                    <span className="block text-xs text-muted-foreground">{country.country_code}</span>
                   </td>
                   <td className={`px-3 py-2 text-right ${valueClass}`}>
                     {numberFormatter.format(country.traffic)}
@@ -96,8 +110,8 @@ export function CompetitorCountryTable({ countries, emptyMessage, title, useAcce
                   </td>
                   <td className="px-3 py-2 text-right">
                     <div className="flex justify-end gap-1.5">
-                      <Badge variant={statusVariant(country.growth_status)}>{country.growth_status}</Badge>
-                      <Badge variant={statusVariant(country.status)}>{country.status}</Badge>
+                      <Badge className="whitespace-normal break-words text-[11px]" variant={statusVariant(country.growth_status)}>{country.growth_status}</Badge>
+                      <Badge className="whitespace-normal break-words text-[11px]" variant={statusVariant(country.status)}>{country.status}</Badge>
                     </div>
                   </td>
                 </tr>
@@ -112,6 +126,16 @@ export function CompetitorCountryTable({ countries, emptyMessage, title, useAcce
 
 export function CompetitorMovementTable({ countries, emptyMessage, title, useAccent }: CountryTableProps) {
   const valueClass = useAccent ? 'text-sky-500' : 'text-foreground';
+  type MovementSortKey = 'country' | 'growth_rate' | 'traffic';
+  const columns: SortColumn<CompetitorCountryMetric, MovementSortKey>[] = [
+    { key: 'country', getValue: (country) => country.country },
+    { key: 'traffic', getValue: (country) => country.traffic },
+    { key: 'growth_rate', getValue: (country) => country.growth_rate },
+  ];
+  const { requestSort, sortedRows, sortState } = useTableSort(countries, columns, {
+    direction: title === 'Growing Countries' ? 'desc' : 'asc',
+    key: 'growth_rate',
+  });
 
   return (
     <div className="space-y-3">
@@ -127,18 +151,18 @@ export function CompetitorMovementTable({ countries, emptyMessage, title, useAcc
         {countries.length === 0 ? (
           <p className="p-4 text-sm text-muted-foreground">{emptyMessage}</p>
         ) : (
-          <table className="w-full text-sm">
+          <table className="w-full table-fixed text-sm">
             <thead className="bg-secondary text-muted-foreground">
               <tr>
-                <th className="px-3 py-2 text-left font-medium">Country</th>
-                <th className="px-3 py-2 text-right font-medium">Traffic</th>
-                <th className="px-3 py-2 text-right font-medium">Growth</th>
+                <SortableTableHeader activeKey={sortState.key} label="Country" onSort={requestSort} sortDirection={sortState.direction} sortKey="country" />
+                <SortableTableHeader activeKey={sortState.key} align="right" label="Traffic" onSort={requestSort} sortDirection={sortState.direction} sortKey="traffic" />
+                <SortableTableHeader activeKey={sortState.key} align="right" label="Growth" onSort={requestSort} sortDirection={sortState.direction} sortKey="growth_rate" />
               </tr>
             </thead>
             <tbody>
-              {countries.map((country) => (
+              {sortedRows.map((country) => (
                 <tr className="border-t" key={country.country_id}>
-                  <td className={`px-3 py-2 font-medium ${valueClass}`}>{country.country}</td>
+                  <td className={`break-words px-3 py-2 font-medium ${valueClass}`}>{country.country}</td>
                   <td className={`px-3 py-2 text-right ${valueClass}`}>
                     {numberFormatter.format(country.traffic)}
                   </td>

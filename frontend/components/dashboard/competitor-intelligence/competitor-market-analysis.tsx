@@ -149,10 +149,13 @@ export function CompetitorMarketAnalysis({ data, useAccent }: MarketAnalysisProp
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-foreground">Market Windows</h3>
           <InformationPopover ariaLabel="About market windows" title="Market Windows">
-            <p><strong>declining_presence:</strong> country traffic declined by at least 10%.</p>
-            <p><strong>small_but_growing:</strong> country share is below 5% while growth is at least 20%.</p>
-            <p><strong>low_stability:</strong> traffic is active on fewer than 40% of period days.</p>
-            <p><strong>high_dependency:</strong> traffic is highly concentrated in the leading markets.</p>
+            <p>Market windows are rule-based status signals for the selected competitor country context.</p>
+            <div className="mt-3 grid gap-2">
+              <p><strong>declining_presence:</strong> country traffic declined by at least 10% between period halves.</p>
+              <p><strong>small_but_growing:</strong> country share is below 5% while growth is at least 20%.</p>
+              <p><strong>low_stability:</strong> traffic is active on fewer than 40% of period days.</p>
+              <p><strong>high_dependency:</strong> traffic is highly concentrated in one leading country or top three countries.</p>
+            </div>
           </InformationPopover>
         </div>
         {data.market_windows.length === 0 ? (
