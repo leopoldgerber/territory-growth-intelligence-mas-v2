@@ -114,6 +114,7 @@ def fetch_score_signals(
     scope: str,
     country_id: int,
     calculation_version: str,
+    context_hash: str | None = None,
 ) -> list[dict[str, Any]]:
     """Fetch applicable derived signals.
     Args:
@@ -123,17 +124,21 @@ def fetch_score_signals(
         date_to (date): Calculation end date.
         scope (str): Analytical scope.
         country_id (int): Country identifier.
-        calculation_version (str): Calculation version."""
-    records = session.scalars(
-        select(DerivedSignal).where(
-            DerivedSignal.project_id == project_id,
-            DerivedSignal.date_from == date_from,
-            DerivedSignal.date_to == date_to,
-            DerivedSignal.scope == scope,
-            DerivedSignal.calculation_version == calculation_version,
-            or_(DerivedSignal.country_id == country_id, DerivedSignal.country_id.is_(None)),
-        )
-    ).all()
+        calculation_version (str): Calculation version.
+        context_hash (str | None): Optional context hash."""
+    filters = [
+        DerivedSignal.project_id == project_id,
+        DerivedSignal.date_from == date_from,
+        DerivedSignal.date_to == date_to,
+        DerivedSignal.scope == scope,
+        DerivedSignal.calculation_version == calculation_version,
+        or_(DerivedSignal.country_id == country_id, DerivedSignal.country_id.is_(None)),
+    ]
+    if context_hash is not None:
+        filters.append(DerivedSignal.context_hash == context_hash)
+    else:
+        filters.append(DerivedSignal.context_hash.is_(None))
+    records = session.scalars(select(DerivedSignal).where(*filters)).all()
     return [
         {
             'signal_type': record.signal_type,
@@ -150,6 +155,7 @@ def delete_scores(
     date_from: date,
     date_to: date,
     calculation_version: str,
+    context_hash: str | None = None,
 ) -> int:
     """Delete existing opportunity scores.
     Args:
@@ -157,25 +163,31 @@ def delete_scores(
         project_id (UUID): Project identifier.
         date_from (date): Calculation start date.
         date_to (date): Calculation end date.
-        calculation_version (str): Calculation version."""
-    result = session.execute(
-        delete(OpportunityScore).where(
-            OpportunityScore.project_id == project_id,
-            OpportunityScore.date_from == date_from,
-            OpportunityScore.date_to == date_to,
-            OpportunityScore.calculation_version == calculation_version,
-        )
-    )
+        calculation_version (str): Calculation version.
+        context_hash (str | None): Optional context hash."""
+    filters = [
+        OpportunityScore.project_id == project_id,
+        OpportunityScore.date_from == date_from,
+        OpportunityScore.date_to == date_to,
+        OpportunityScore.calculation_version == calculation_version,
+    ]
+    if context_hash is not None:
+        filters.append(OpportunityScore.context_hash == context_hash)
+    else:
+        filters.append(OpportunityScore.context_hash.is_(None))
+    result = session.execute(delete(OpportunityScore).where(*filters))
     return safe_int(result.rowcount)
 
 
-def build_score_key(project_id: UUID, candidate: ScoreCandidate) -> str:
+def build_score_key(project_id: UUID, candidate: ScoreCandidate, context_hash: str | None = None) -> str:
     """Build deterministic opportunity score key.
     Args:
         project_id (UUID): Project identifier.
-        candidate (ScoreCandidate): Opportunity score candidate."""
+        candidate (ScoreCandidate): Opportunity score candidate.
+        context_hash (str | None): Optional context hash."""
+    context_key = context_hash or 'default'
     return (
-        f'{project_id}:{candidate.scope}:{candidate.country_id}:{candidate.date_from}:'
+        f'{project_id}:{context_key}:{candidate.scope}:{candidate.country_id}:{candidate.date_from}:'
         f'{candidate.date_to}:{candidate.calculation_version}'
     )
 
@@ -184,21 +196,27 @@ def insert_scores(
     session: Session,
     project_id: UUID,
     candidates: list[ScoreCandidate],
+    context_hash: str | None = None,
+    context_json: dict[str, Any] | None = None,
 ) -> list[OpportunityScore]:
     """Insert opportunity score candidates.
     Args:
         session (Session): Active database session.
         project_id (UUID): Project identifier.
-        candidates (list[ScoreCandidate]): Ranked score candidates."""
+        candidates (list[ScoreCandidate]): Ranked score candidates.
+        context_hash (str | None): Optional context hash.
+        context_json (dict[str, Any] | None): Optional context JSON."""
     records: list[OpportunityScore] = []
     for candidate in candidates:
         factor_scores = {factor.factor: factor.score for factor in candidate.factors}
         records.append(
             OpportunityScore(
                 project_id=project_id,
+                context_hash=context_hash,
+                context_json=context_json,
                 country_id=candidate.country_id,
                 scope=candidate.scope,
-                score_key=build_score_key(project_id, candidate),
+                score_key=build_score_key(project_id, candidate, context_hash),
                 date_from=candidate.date_from,
                 date_to=candidate.date_to,
                 opportunity_score=candidate.opportunity_score,
@@ -245,7 +263,7 @@ def select_scores(
         scope (str | None): Requested analytical scope.
         categories (list[str] | None): Requested score categories.
         limit (int): Result row limit."""
-    filters: list[Any] = [OpportunityScore.project_id == project_id]
+    filters: list[Any] = [OpportunityScore.project_id == project_id, OpportunityScore.context_hash.is_(None)]
     if date_from is not None:
         filters.append(OpportunityScore.date_from == date_from)
     if date_to is not None:

@@ -4,10 +4,15 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
+
 BudgetChannelRole = Literal['priority', 'test', 'supporting', 'risky']
+StrategyMode = Literal['existing_presence', 'market_entry']
+DependencyStatusValue = Literal['existing', 'recalculated', 'skipped', 'failed', 'fallback_used']
 
 
 class BudgetStrategyGenerateRequest(BaseModel):
+    strategy_mode: StrategyMode = 'existing_presence'
+    auto_prepare_dependencies: bool = True
     date_from: date
     date_to: date
     country: str
@@ -21,10 +26,27 @@ class BudgetStrategyGenerateRequest(BaseModel):
     calculation_version: str = 'v1'
 
 
+class DependencyItemStatus(BaseModel):
+    required: bool
+    status: DependencyStatusValue
+    contexts: list[str] = Field(default_factory=list)
+    used_in_report: bool = False
+    is_fallback: bool = False
+    score: float | None = None
+    message: str | None = None
+
+
+class DependencyStatus(BaseModel):
+    signals: DependencyItemStatus
+    opportunity_score: DependencyItemStatus
+    fallbacks_used: list[str] = Field(default_factory=list)
+
+
 class ChannelInput(BaseModel):
     channel: str
     market_share: float
     competitor_share: float
+    company_global_share: float = 0.0
     quality_score: float
     stability_score: float
     opportunity_modifier: float
@@ -73,6 +95,7 @@ class BudgetStrategyReportResponse(BaseModel):
     date_to: date
     budget_amount: float
     currency: str
+    strategy_mode: StrategyMode
     scope: str
     status: str
     opportunity_score: float | None
@@ -82,6 +105,9 @@ class BudgetStrategyReportResponse(BaseModel):
     expected_effect: ExpectedEffect
     risks: list[StrategyRisk]
     explanation: dict[str, Any]
+    dependency_status: DependencyStatus
+    context_hash: str
+    context_json: dict[str, Any]
     source_snapshot: dict[str, Any]
     calculation_version: str
     created_at: datetime

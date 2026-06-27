@@ -386,11 +386,13 @@ def fetch_quality_metric(
     }
 
 
-def build_signal_key(project_id: UUID, candidate: SignalCandidate) -> str:
+def build_signal_key(project_id: UUID, candidate: SignalCandidate, context_hash: str | None = None) -> str:
     """Build deterministic signal key.
     Args:
         project_id (UUID): Project identifier.
-        candidate (SignalCandidate): Derived signal candidate."""
+        candidate (SignalCandidate): Derived signal candidate.
+        context_hash (str | None): Optional context hash."""
+    context_key = context_hash or 'default'
     entity_values = ':'.join(
         str(value or '')
         for value in (
@@ -400,9 +402,18 @@ def build_signal_key(project_id: UUID, candidate: SignalCandidate) -> str:
             candidate.domain_id,
         )
     )
-    return (
-        f'{project_id}:{candidate.scope}:{candidate.signal_type}:{candidate.entity_type}:{entity_values}:'
-        f'{candidate.date_from}:{candidate.date_to}:{candidate.calculation_version}'
+    return ':'.join(
+        [
+            str(project_id),
+            context_key,
+            candidate.scope,
+            candidate.signal_type,
+            candidate.entity_type,
+            entity_values,
+            str(candidate.date_from),
+            str(candidate.date_to),
+            candidate.calculation_version,
+        ]
     )
 
 
@@ -412,6 +423,7 @@ def delete_signals(
     date_from: date,
     date_to: date,
     calculation_version: str,
+    context_hash: str | None = None,
 ) -> int:
     """Delete existing period signals.
     Args:
@@ -419,15 +431,19 @@ def delete_signals(
         project_id (UUID): Project identifier.
         date_from (date): Calculation start date.
         date_to (date): Calculation end date.
-        calculation_version (str): Calculation rule version."""
-    result = session.execute(
-        delete(DerivedSignal).where(
-            DerivedSignal.project_id == project_id,
-            DerivedSignal.date_from == date_from,
-            DerivedSignal.date_to == date_to,
-            DerivedSignal.calculation_version == calculation_version,
-        )
-    )
+        calculation_version (str): Calculation rule version.
+        context_hash (str | None): Optional context hash."""
+    filters = [
+        DerivedSignal.project_id == project_id,
+        DerivedSignal.date_from == date_from,
+        DerivedSignal.date_to == date_to,
+        DerivedSignal.calculation_version == calculation_version,
+    ]
+    if context_hash is not None:
+        filters.append(DerivedSignal.context_hash == context_hash)
+    else:
+        filters.append(DerivedSignal.context_hash.is_(None))
+    result = session.execute(delete(DerivedSignal).where(*filters))
     return safe_int(result.rowcount)
 
 
@@ -435,16 +451,22 @@ def insert_signals(
     session: Session,
     project_id: UUID,
     candidates: list[SignalCandidate],
+    context_hash: str | None = None,
+    context_json: dict[str, Any] | None = None,
 ) -> list[DerivedSignal]:
     """Insert derived signal records.
     Args:
         session (Session): Active database session.
         project_id (UUID): Project identifier.
-        candidates (list[SignalCandidate]): Derived signal candidates."""
+        candidates (list[SignalCandidate]): Derived signal candidates.
+        context_hash (str | None): Optional context hash.
+        context_json (dict[str, Any] | None): Optional context JSON."""
     records = [
         DerivedSignal(
-            signal_key=build_signal_key(project_id, candidate),
+            signal_key=build_signal_key(project_id, candidate, context_hash),
             project_id=project_id,
+            context_hash=context_hash,
+            context_json=context_json,
             **candidate.model_dump(),
         )
         for candidate in candidates
@@ -480,7 +502,7 @@ def build_signal_filters(
         domain (str | None): Requested domain values.
         severity (str | None): Requested severity values.
         scope (str | None): Requested analytical scope."""
-    filters: list[Any] = [DerivedSignal.project_id == project_id]
+    filters: list[Any] = [DerivedSignal.project_id == project_id, DerivedSignal.context_hash.is_(None)]
     if date_from is not None:
         filters.append(DerivedSignal.date_from == date_from)
     if date_to is not None:

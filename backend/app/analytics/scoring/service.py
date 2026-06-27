@@ -117,6 +117,7 @@ def build_scope_scores(
             scope,
             metric.country_id,
             request.calculation_version,
+            request.context_hash,
         )
         candidates.append(
             build_candidate(
@@ -176,8 +177,9 @@ def recalculate_scores(
             request.date_from,
             request.date_to,
             request.calculation_version,
+            request.context_hash,
         )
-        records = insert_scores(session, project_id, candidates)
+        records = insert_scores(session, project_id, candidates, request.context_hash, request.context_json)
         session.commit()
     except Exception:
         session.rollback()

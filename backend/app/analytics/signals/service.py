@@ -235,8 +235,9 @@ def recalculate_signals(
             request.date_from,
             request.date_to,
             request.calculation_version,
+            request.context_hash,
         )
-        records = insert_signals(session, project_id, candidates)
+        records = insert_signals(session, project_id, candidates, request.context_hash, request.context_json)
         session.commit()
         for record in records:
             session.refresh(record)

@@ -372,6 +372,8 @@ class RecalculateSignalsRequest(BaseModel):
     competitors: str = 'all'
     competitor_domain: str = 'all'
     calculation_version: str = 'v1'
+    context_hash: str | None = None
+    context_json: dict[str, Any] | None = None
 
 
 class DerivedSignalResponse(BaseModel):
@@ -463,6 +465,8 @@ class OpportunityScoreRecalculateRequest(BaseModel):
     competitors: str = 'all'
     competitor_domain: str = 'all'
     calculation_version: str = 'v1'
+    context_hash: str | None = None
+    context_json: dict[str, Any] | None = None
 
 
 class OpportunityScoreRecalculateResponse(BaseModel):

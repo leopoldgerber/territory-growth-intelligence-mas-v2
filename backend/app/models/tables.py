@@ -205,11 +205,14 @@ class DerivedSignal(Base):
         Index('ix_derived_signal_project_period', 'project_id', 'date_from', 'date_to'),
         Index('ix_derived_signal_project_severity', 'project_id', 'severity'),
         Index('ix_derived_signal_project_scope', 'project_id', 'scope'),
+        Index('ix_derived_signal_context_hash', 'context_hash'),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     signal_key: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
     project_id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), nullable=False)
+    context_hash: Mapped[str | None] = mapped_column(Text)
+    context_json: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     signal_type: Mapped[str] = mapped_column(Text, nullable=False)
     signal_group: Mapped[str] = mapped_column(Text, nullable=False)
     entity_type: Mapped[str] = mapped_column(Text, nullable=False)
@@ -248,10 +251,13 @@ class OpportunityScore(Base):
         Index('ix_opportunity_score_project_score', 'project_id', 'opportunity_score'),
         Index('ix_opportunity_score_project_category', 'project_id', 'score_category'),
         Index('ix_opportunity_score_project_version', 'project_id', 'calculation_version'),
+        Index('ix_opportunity_score_context_hash', 'context_hash'),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     project_id: Mapped[UUID] = mapped_column(PostgresUUID(as_uuid=True), nullable=False)
+    context_hash: Mapped[str | None] = mapped_column(Text)
+    context_json: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     country_id: Mapped[int] = mapped_column(ForeignKey('dim_country.id'), nullable=False)
     scope: Mapped[str] = mapped_column(Text, nullable=False)
     score_key: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
@@ -291,6 +297,8 @@ class BudgetStrategyReport(Base):
         Index('ix_budget_strategy_project_scope', 'project_id', 'scope'),
         Index('ix_budget_strategy_project_created', 'project_id', 'created_at'),
         Index('ix_budget_strategy_project_version', 'project_id', 'calculation_version'),
+        Index('ix_budget_strategy_project_mode', 'project_id', 'strategy_mode'),
+        Index('ix_budget_strategy_context_hash', 'context_hash'),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
@@ -301,6 +309,7 @@ class BudgetStrategyReport(Base):
     date_to: Mapped[date] = mapped_column(Date, nullable=False)
     budget_amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
     currency: Mapped[str] = mapped_column(Text, nullable=False)
+    strategy_mode: Mapped[str] = mapped_column(Text, nullable=False, default='existing_presence')
     scope: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(Text, nullable=False, default='generated')
     opportunity_score: Mapped[Decimal | None] = mapped_column(Numeric(10, 4))
@@ -311,6 +320,9 @@ class BudgetStrategyReport(Base):
     expected_effect: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     risks: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False)
     explanation: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    dependency_status: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    context_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    context_json: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     source_snapshot: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     calculation_version: Mapped[str] = mapped_column(Text, nullable=False, default='v1')
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
