@@ -152,6 +152,7 @@ def process_run(session: Session, run_id: UUID) -> dict[str, Any]:
     refreshed_run = get_run(session, run_id)
     if refreshed_run is None:
         return {'run_id': str(run_id), 'status': 'failed', 'message': 'Ingestion run not found'}
+    sync_alerts(session, refreshed_run)
     return serialize_run(refreshed_run)
 
 
@@ -377,3 +378,18 @@ def now_value() -> datetime:
         None (None): No arguments are required."""
     current_time = datetime.now(UTC)
     return current_time
+
+
+def sync_alerts(session: Session, ingestion_run: Any) -> Any:
+    """Sync alert updates.
+    Args:
+        session (Session): Active database session.
+        ingestion_run (Any): Ingestion run model."""
+    try:
+        from app.alerts.service import sync_ingestion
+
+        sync_ingestion(session, ingestion_run)
+        session.commit()
+    except Exception:
+        session.rollback()
+    return ingestion_run

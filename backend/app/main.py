@@ -1,10 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.routes.alerts import router as alerts_router
 from app.api.routes.analytics import router as analytics_router
 from app.api.routes.db import router as db_router
+from app.api.routes.feedback import router as feedback_router
 from app.api.routes.health import router as health_router
+from app.api.routes.history import router as history_router
 from app.api.routes.ingestion import router as ingestion_router
+from app.api.routes.mas import router as mas_router
 from app.api.routes.meta import router as meta_router
 from app.api.routes.reports import router as reports_router
 from app.core.config import get_settings
@@ -39,6 +43,10 @@ def create_app() -> FastAPI:
     application.include_router(ingestion_router)
     application.include_router(analytics_router)
     application.include_router(reports_router)
+    application.include_router(mas_router)
+    application.include_router(history_router)
+    application.include_router(alerts_router)
+    application.include_router(feedback_router)
     return application
 
 

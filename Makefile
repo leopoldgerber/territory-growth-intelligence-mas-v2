@@ -1,5 +1,6 @@
 COMPOSE_FILE=infra/docker-compose.postgres.yml
 REDIS_COMPOSE_FILE=infra/docker-compose.redis.yml
+QDRANT_COMPOSE_FILE=infra/docker-compose.qdrant.yml
 POSTGRES_CONTAINER=tgi_postgres
 COREPACK_HOME?=$(CURDIR)/.corepack
 UV_CACHE_DIR?=$(CURDIR)/.uv-cache
@@ -9,7 +10,7 @@ POSTGRES_USER?=tgi_user
 -include .env
 export
 
-.PHONY: db-up db-down db-logs db-restart db-ps db-shell redis-up redis-down redis-logs backend-sync backend-run worker-run worker-run-watch alembic-upgrade alembic-revision frontend-sync frontend-dev frontend-build frontend-lint
+.PHONY: db-up db-down db-logs db-restart db-ps db-shell redis-up redis-down redis-logs qdrant-up qdrant-down qdrant-logs backend-sync backend-run worker-run worker-run-watch alembic-upgrade alembic-revision frontend-sync frontend-dev frontend-build frontend-lint
 
 # Database
 db-up:
@@ -39,6 +40,16 @@ redis-down:
 
 redis-logs:
 	docker compose -f $(REDIS_COMPOSE_FILE) logs -f redis
+
+# Qdrant
+qdrant-up:
+	docker compose -f $(QDRANT_COMPOSE_FILE) up -d
+
+qdrant-down:
+	docker compose -f $(QDRANT_COMPOSE_FILE) down
+
+qdrant-logs:
+	docker compose -f $(QDRANT_COMPOSE_FILE) logs -f qdrant
 
 # Backend
 backend-sync:

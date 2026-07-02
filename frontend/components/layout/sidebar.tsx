@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BarChart3, FileText, Gauge, MonitorCheck, Upload } from 'lucide-react';
+import { BarChart3, Bell, BrainCircuit, FileText, Gauge, History, MessageSquareText, MonitorCheck, Upload } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -28,6 +28,30 @@ const navigationItems = [
     title: 'Reports',
     href: '/reports/budget-strategy',
     icon: FileText,
+    disabled: false,
+  },
+  {
+    title: 'MAS Analysis',
+    href: '/mas',
+    icon: BrainCircuit,
+    disabled: false,
+  },
+  {
+    title: 'History',
+    href: '/history',
+    icon: History,
+    disabled: false,
+  },
+  {
+    title: 'Alerts',
+    href: '/alerts',
+    icon: Bell,
+    disabled: false,
+  },
+  {
+    title: 'Feedback',
+    href: '/feedback',
+    icon: MessageSquareText,
     disabled: false,
   },
 ];
